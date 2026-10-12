@@ -1,1 +1,806 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>나만의 모바일 티켓북 & 실관람평 다이어리</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (Inter & Noto Sans KR) -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #e5e5e5;
+            color: #222222;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
 
+        body > div {
+            filter: grayscale(1);
+            border: 0;
+            border-radius: 0;
+            box-shadow: none;
+        }
+
+        body > div * {
+            border-radius: 0 !important;
+            box-shadow: none !important;
+        }
+
+        .bg-gradient-to-br {
+            background-image: none !important;
+            background-color: #e5e5e5 !important;
+            color: #222222 !important;
+        }
+
+        .bg-gradient-to-br * {
+            color: #333333 !important;
+        }
+
+        /* Lo-fi Wireframe Aesthetic details */
+        .wireframe-border {
+            border: 1px solid #d1d5db;
+        }
+
+        .wireframe-placeholder {
+            background-color: #f9fafb;
+            background-image: linear-gradient(45deg, #e5e7eb 25%, transparent 25%), 
+                              linear-gradient(-45deg, #e5e7eb 25%, transparent 25%), 
+                              linear-gradient(45deg, transparent 75%, #e5e7eb 75%), 
+                              linear-gradient(-45deg, transparent 75%, #e5e7eb 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+        }
+
+        /* Custom Scrollbar for Horizontal Banners */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Ticket Notch Effect */
+        .ticket-shape {
+            position: relative;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+        .ticket-shape::before, .ticket-shape::after {
+            content: '';
+            position: absolute;
+            top: 68%;
+            width: 16px;
+            height: 16px;
+            background-color: #f3f4f6;
+            border-radius: 50%;
+            transform: translateY(-50%);
+            z-index: 10;
+        }
+        .ticket-shape::before { left: -8px; }
+        .ticket-shape::after { right: -8px; }
+
+        .dashed-divider {
+            border-top: 2px dashed #e5e7eb;
+        }
+    </style>
+</head>
+<body class="flex justify-center items-center min-h-screen p-0 sm:p-4 bg-gray-200">
+
+    <!-- Mobile Device Simulator Wrapper -->
+    <div class="w-full max-w-md h-[100vh] sm:h-[844px] bg-white overflow-hidden flex flex-col relative">
+        
+        <!-- Status Bar (Mobile Decorator) -->
+        <div class="bg-white px-6 pt-3 pb-2 flex justify-between items-center text-xs text-gray-500 font-semibold z-30 select-none">
+            <span>09:41</span>
+            <div class="w-20 h-4 bg-black rounded-full mx-auto hidden sm:block"></div>
+            <div class="flex items-center space-x-1.5">
+                <i class="fa-solid fa-signal text-[10px]"></i>
+                <i class="fa-solid fa-wifi text-[10px]"></i>
+                <i class="fa-solid fa-battery-full text-xs"></i>
+            </div>
+        </div>
+
+        <!-- Header / Navigation Bar -->
+        <header class="bg-white px-4 py-3 border-b border-gray-100 flex items-center justify-between sticky top-0 z-20">
+            <div class="flex items-center space-x-2">
+                <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-md">
+                    <i class="fa-solid fa-ticket"></i>
+                </div>
+                <h1 class="font-bold text-lg text-gray-800 tracking-tight">FILM LOG</h1>
+            </div>
+            <div class="flex items-center space-x-3 text-gray-600">
+                <button id="btn-search-toggle" class="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                    <i class="fa-solid fa-magnifying-glass text-lg"></i>
+                </button>
+                <button id="btn-notification" class="p-2 hover:bg-gray-100 rounded-full transition-colors relative">
+                    <i class="fa-regular fa-bell text-lg"></i>
+                    <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Search Overlay (Toggleable) -->
+        <div id="search-bar-container" class="hidden bg-gray-50 px-4 py-2 border-b border-gray-200 transition-all duration-200">
+            <div class="relative">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm"></i>
+                <input type="text" id="movie-search-input" placeholder="영화 제목, 감독, 관람날짜 검색..." class="w-full pl-9 pr-8 py-2 text-sm bg-white border border-gray-300 rounded-xl focus:outline-none focus:border-indigo-500 transition-all">
+                <button id="btn-search-clear" class="absolute right-2.5 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 hidden">
+                    <i class="fa-solid fa-circle-xmark text-sm"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Scrollable Body Content -->
+        <main id="main-content" class="flex-1 overflow-y-auto bg-gray-50 px-4 py-4 space-y-6">
+            <div id="page-home" class="page-view">
+
+            <!-- Profile & Quick Stats Summary Box -->
+            <section class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="relative">
+                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" alt="User Profile" class="w-12 h-12 rounded-full object-cover border-2 border-indigo-100">
+                        <span class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full"></span>
+                    </div>
+                    <div>
+                        <div class="text-xs text-gray-400 font-medium">시네필 다이어리</div>
+                        <div class="font-bold text-gray-800 text-sm">김시네 님 <span class="text-xs text-indigo-600 font-semibold bg-indigo-50 px-2 py-0.5 rounded-md ml-1">Lv. VIP</span></div>
+                    </div>
+                </div>
+                <div class="flex space-x-3 text-center border-l border-gray-100 pl-4">
+                    <div>
+                        <div class="text-xs text-gray-400">올해 관람</div>
+                        <div class="font-bold text-indigo-600 text-base" id="stat-count">24편</div>
+                    </div>
+                    <div>
+                        <div class="text-xs text-gray-400">평균 별점</div>
+                        <div class="font-bold text-amber-500 text-base">★ 4.2</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Filter & View Mode Toggle (Lo-Fi Design Component) -->
+            <section class="flex items-center justify-between">
+                <div class="flex space-x-1 bg-gray-200 p-1 rounded-xl text-xs font-medium">
+                    <button id="view-mode-card" class="px-3 py-1.5 rounded-lg bg-white shadow-sm text-gray-800 transition-all">
+                        <i class="fa-solid fa-ticket mr-1"></i> 티켓형
+                    </button>
+                    <button id="view-mode-grid" class="px-3 py-1.5 rounded-lg text-gray-500 hover:text-gray-800 transition-all">
+                        <i class="fa-solid fa-border-all mr-1"></i> 포스터형
+                    </button>
+                    <button id="view-mode-list" class="px-3 py-1.5 rounded-lg text-gray-500 hover:text-gray-800 transition-all">
+                        <i class="fa-solid fa-list mr-1"></i> 리스트형
+                    </button>
+                </div>
+                
+                <select id="sort-select" class="text-xs bg-transparent border-none font-semibold text-gray-600 focus:outline-none cursor-pointer">
+                    <option value="latest">최신 관람순</option>
+                    <option value="rating">별점 높은순</option>
+                    <option value="title">제목순</option>
+                </select>
+            </section>
+
+            <!-- Main Content Area: Ticket List Section -->
+            <section id="ticket-container" class="space-y-4">
+                <!-- Movie Item Cards will be dynamically injected here via JS -->
+            </section>
+
+            <!-- Recent Diary Highlight Card -->
+            <section class="bg-gradient-to-br from-indigo-900 to-slate-900 rounded-2xl p-4 text-white relative overflow-hidden shadow-lg">
+                <div class="absolute -right-4 -bottom-4 opacity-10 text-9xl">
+                    <i class="fa-solid fa-film"></i>
+                </div>
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-[10px] uppercase font-bold tracking-wider bg-indigo-500/30 text-indigo-300 px-2 py-0.5 rounded-full border border-indigo-400/30">이달의 베스트 관람평</span>
+                    <span class="text-xs text-gray-400"><i class="fa-regular fa-calendar mr-1"></i>2026.10.05</span>
+                </div>
+                <h3 class="font-bold text-base mb-1">"스크린 가득 채운 고독과 영상미의 정점"</h3>
+                <p class="text-xs text-gray-300 line-clamp-2 leading-relaxed mb-3">
+                    오프닝 씬의 압도적인 아날로그 사운드와 카메라 워킹이 여운을 남긴다. 영화관 대형 스크린에서 반드시 봐야 할 걸작.
+                </p>
+                <div class="flex justify-between items-center text-xs pt-2 border-t border-white/10">
+                    <span class="font-medium text-indigo-200">듄: 파트 2 (Dune: Part Two)</span>
+                    <div class="text-amber-400 font-bold">★ 5.0</div>
+                </div>
+            </section>
+
+            <!-- Empty State Placeholder (Hidden by Default) -->
+            <div id="empty-state" class="hidden text-center py-12 bg-white rounded-2xl border border-dashed border-gray-300">
+                <i class="fa-solid fa-ticket text-4xl text-gray-300 mb-3"></i>
+                <p class="text-sm text-gray-500 font-medium">검색 결과 또는 기록된 관람 티켓이 없습니다.</p>
+                <button onclick="resetSearch()" class="mt-3 text-xs text-indigo-600 font-semibold hover:underline">전체 목록 보기</button>
+            </div>
+            </div>
+
+            <section id="page-ticketbook" class="page-view hidden space-y-5">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-lg font-bold text-gray-900">티켓북</h2>
+                        <p id="ticketbook-count" class="text-xs text-gray-500 mt-1"></p>
+                    </div>
+                    <button id="btn-show-ticket-form" class="px-3 py-2 border border-gray-300 bg-white text-sm font-semibold text-gray-800" aria-expanded="false">
+                        <i class="fa-solid fa-plus mr-1"></i> 티켓 등록
+                    </button>
+                </div>
+
+                <form id="ticket-form" class="hidden bg-white border border-gray-300 p-4 space-y-3">
+                    <h3 class="font-bold text-sm">관람 기록 추가</h3>
+                    <label class="block text-xs text-gray-600">영화 제목<input name="title" required maxlength="80" class="mt-1 w-full border border-gray-300 px-3 py-2 text-sm" placeholder="영화 제목"></label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="block text-xs text-gray-600">관람 날짜<input name="date" type="date" required class="mt-1 w-full border border-gray-300 px-2 py-2 text-sm"></label>
+                        <label class="block text-xs text-gray-600">별점<select name="rating" class="mt-1 w-full border border-gray-300 px-2 py-2 text-sm"><option>5</option><option>4.5</option><option>4</option><option>3.5</option><option>3</option><option>2</option><option>1</option></select></label>
+                    </div>
+                    <label class="block text-xs text-gray-600">극장<input name="theater" maxlength="100" class="mt-1 w-full border border-gray-300 px-3 py-2 text-sm" placeholder="극장 이름"></label>
+                    <label class="block text-xs text-gray-600">한 줄 감상<input name="comment" maxlength="240" class="mt-1 w-full border border-gray-300 px-3 py-2 text-sm" placeholder="감상을 기록하세요"></label>
+                    <div class="flex justify-end gap-2">
+                        <button id="btn-cancel-ticket" type="button" class="px-3 py-2 border border-gray-300 text-sm">취소</button>
+                        <button type="submit" class="px-3 py-2 bg-gray-800 text-white text-sm">기록 저장</button>
+                    </div>
+                </form>
+
+                <div id="ticketbook-list" class="space-y-2"></div>
+            </section>
+
+            <section id="page-calendar" class="page-view hidden space-y-5">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-lg font-bold text-gray-900">관람 달력</h2>
+                    <div class="flex items-center gap-3">
+                        <button id="calendar-prev" class="w-8 h-8 border border-gray-300 bg-white" aria-label="이전 달"><i class="fa-solid fa-chevron-left"></i></button>
+                        <strong id="calendar-month" class="text-sm"></strong>
+                        <button id="calendar-next" class="w-8 h-8 border border-gray-300 bg-white" aria-label="다음 달"><i class="fa-solid fa-chevron-right"></i></button>
+                    </div>
+                </div>
+                <div class="grid grid-cols-7 text-center text-xs text-gray-500" aria-hidden="true">
+                    <span class="py-2">일</span><span class="py-2">월</span><span class="py-2">화</span><span class="py-2">수</span><span class="py-2">목</span><span class="py-2">금</span><span class="py-2">토</span>
+                </div>
+                <div id="calendar-days" class="grid grid-cols-7 border-t border-l border-gray-300"></div>
+                <section class="border-t border-gray-300 pt-4">
+                    <h3 id="calendar-selected-date" class="font-bold text-sm mb-3"></h3>
+                    <div id="calendar-events" class="space-y-2"></div>
+                </section>
+            </section>
+
+            <section id="page-profile" class="page-view hidden space-y-5">
+                <h2 class="text-lg font-bold text-gray-900">마이</h2>
+                <div class="flex items-center gap-4 border-b border-gray-300 pb-5">
+                    <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" alt="프로필 사진" class="w-14 h-14 object-cover">
+                    <div><h3 class="font-bold">김시네 님</h3><p class="text-xs text-gray-500 mt-1">나만의 영화 기록</p></div>
+                </div>
+                <div class="grid grid-cols-3 divide-x divide-gray-300 border-y border-gray-300 py-4 text-center">
+                    <div><strong id="profile-total" class="block text-lg"></strong><span class="text-xs text-gray-500">총 관람</span></div>
+                    <div><strong id="profile-average" class="block text-lg"></strong><span class="text-xs text-gray-500">평균 별점</span></div>
+                    <div><strong id="profile-month" class="block text-lg"></strong><span class="text-xs text-gray-500">이번 달</span></div>
+                </div>
+                <section>
+                    <h3 class="font-bold text-sm mb-3">최근 관람 기록</h3>
+                    <div id="profile-recent" class="divide-y divide-gray-200"></div>
+                </section>
+            </section>
+
+            <section id="page-notifications" class="page-view hidden space-y-4">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-lg font-bold text-gray-900">알림</h2>
+                    <button id="btn-notifications-home" class="text-xs text-gray-600 underline">홈으로</button>
+                </div>
+                <div class="border-y border-gray-300 py-4">
+                    <p class="text-sm font-semibold">영화 기록을 시작해 보세요</p>
+                    <p class="text-xs text-gray-500 mt-1">관람한 영화를 티켓북에 추가하면 달력과 통계에 반영됩니다.</p>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- Floating Add Ticket Button -->
+        <button id="btn-add-ticket" class="absolute right-5 bottom-20 w-14 h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-lg flex items-center justify-center text-2xl z-30 transition-transform active:scale-95">
+            <i class="fa-solid fa-plus"></i>
+        </button>
+
+        <!-- Bottom Mobile Navigation Bar -->
+        <nav class="bg-white border-t border-gray-200 px-6 py-2 flex justify-between items-center z-30 text-gray-400">
+            <button type="button" data-page="home" class="bottom-nav-item flex flex-col items-center text-indigo-600" aria-current="page">
+                <i class="fa-solid fa-house text-lg"></i>
+                <span class="text-[10px] mt-1 font-semibold">홈</span>
+            </button>
+            <button type="button" data-page="ticketbook" class="bottom-nav-item flex flex-col items-center hover:text-gray-700 transition-colors">
+                <i class="fa-solid fa-book-bookmark text-lg"></i>
+                <span class="text-[10px] mt-1">티켓북</span>
+            </button>
+            <button type="button" data-page="calendar" class="bottom-nav-item flex flex-col items-center hover:text-gray-700 transition-colors">
+                <i class="fa-solid fa-calendar-days text-lg"></i>
+                <span class="text-[10px] mt-1">달력</span>
+            </button>
+            <button type="button" data-page="profile" class="bottom-nav-item flex flex-col items-center hover:text-gray-700 transition-colors">
+                <i class="fa-solid fa-user text-lg"></i>
+                <span class="text-[10px] mt-1">마이</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- Internal App JavaScript Logic -->
+    <script>
+        /**
+         * Project Folder Reference Notice:
+         * Project Root: project/
+         * ├─ index.html
+         * ├─ css/
+         * │  └─ style.css
+         * ├─ js/
+         * │  └─ app.js
+         * ├─ data/
+         * ├─ asset/
+         * └─ pages/
+         *    ├─ ticketbook.html
+         *    ├─ calendar.html
+         *    └─ mypage.html
+         */
+
+        // Sample Movie Ticket Data Model
+        const sampleTickets = [
+            {
+                id: "t-001",
+                title: "파묘 (Exhuma)",
+                date: "2026.03.14",
+                time: "19:30 ~ 21:44",
+                theater: "CGV 용산아이파크몰 4DX",
+                seat: "H열 12번",
+                rating: 4.5,
+                comment: "몰입감이 미쳤다. 최민식 배우와 김고은 배우의 연기합이 대단했음.",
+                posterUrl: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=400&auto=format&fit=crop&q=80",
+                genre: "미스터리/공포",
+                companion: "혼자 관람"
+            },
+            {
+                id: "t-002",
+                title: "듄: 파트 2 (Dune 2)",
+                date: "2026.03.02",
+                time: "14:00 ~ 16:46",
+                theater: "메가박스 코엑스 돌비시네마",
+                seat: "G열 09번",
+                rating: 5.0,
+                comment: "시각적, 청각적 전율. 영화관의 존재 이유를 보여주는 대작.",
+                posterUrl: "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=400&auto=format&fit=crop&q=80",
+                genre: "SF/액션",
+                companion: "친구와 함께"
+            },
+            {
+                id: "t-003",
+                title: "오펜하이머 (Oppenheimer)",
+                date: "2026.02.18",
+                time: "10:15 ~ 13:15",
+                theater: "롯데시네마 월드타워 SUPER PLEX",
+                seat: "F열 15번",
+                rating: 4.0,
+                comment: "사운드 연출이 기막힘. 전반부 대사량이 많아 재관람 필요할 듯.",
+                posterUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=400&auto=format&fit=crop&q=80",
+                genre: "전기/드라마",
+                companion: "연인과 함께"
+            }
+        ];
+
+        // State Management
+        let tickets = [...sampleTickets];
+        let currentViewMode = 'card'; // 'card' | 'grid' | 'list'
+        try {
+            const savedTickets = JSON.parse(localStorage.getItem('film-log-tickets') || 'null');
+            if (Array.isArray(savedTickets)) tickets = savedTickets;
+        } catch (error) {
+            console.warn('저장된 관람 기록을 불러오지 못했습니다.', error);
+        }
+
+        // DOM Elements
+        const container = document.getElementById('ticket-container');
+        const emptyState = document.getElementById('empty-state');
+        const statCount = document.getElementById('stat-count');
+        const searchToggleBtn = document.getElementById('btn-search-toggle');
+        const searchBarContainer = document.getElementById('search-bar-container');
+        const searchInput = document.getElementById('movie-search-input');
+        const searchClearBtn = document.getElementById('btn-search-clear');
+        const sortSelect = document.getElementById('sort-select');
+
+        // View Switchers Buttons
+        const btnCard = document.getElementById('view-mode-card');
+        const btnGrid = document.getElementById('view-mode-grid');
+        const btnList = document.getElementById('view-mode-list');
+        const pageViews = document.querySelectorAll('.page-view');
+        const ticketbookList = document.getElementById('ticketbook-list');
+        const ticketForm = document.getElementById('ticket-form');
+        const calendarDays = document.getElementById('calendar-days');
+        let selectedCalendarDate = tickets[0]?.date || formatDate(new Date());
+        let calendarYear = Number(selectedCalendarDate.slice(0, 4));
+        let calendarMonthIndex = Number(selectedCalendarDate.slice(5, 7)) - 1;
+
+        function formatDate(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}.${month}.${day}`;
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, character => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            })[character]);
+        }
+
+        function showPage(page, updateHistory = true) {
+            const pageElement = document.getElementById(`page-${page}`);
+            if (!pageElement) return;
+
+            pageViews.forEach(view => view.classList.toggle('hidden', view !== pageElement));
+            document.querySelectorAll('.bottom-nav-item').forEach(item => {
+                const isActive = item.dataset.page === page;
+                item.classList.remove('text-indigo-600');
+                item.classList.toggle('text-gray-800', isActive);
+                item.classList.toggle('text-gray-400', !isActive);
+                item.setAttribute('aria-current', isActive ? 'page' : 'false');
+            });
+
+            const searchIsAvailable = page === 'home' || page === 'ticketbook';
+            searchBarContainer.classList.toggle('hidden', !searchIsAvailable || searchBarContainer.dataset.open !== 'true');
+            document.getElementById('btn-add-ticket').classList.toggle('hidden', page !== 'home');
+            if (page === 'ticketbook') renderTicketbook();
+            if (page === 'calendar') renderCalendar();
+            if (page === 'profile') renderProfile();
+            document.getElementById('main-content').scrollTop = 0;
+
+            if (updateHistory && location.hash !== `#${page}`) {
+                try {
+                    history.pushState({ page }, '', `#${page}`);
+                } catch (error) {
+                    location.hash = page;
+                }
+            }
+        }
+
+        function renderTicketbook() {
+            const visibleTickets = filterAndSortTickets();
+            document.getElementById('ticketbook-count').textContent = `${visibleTickets.length}개의 관람 기록`;
+            ticketbookList.innerHTML = visibleTickets.length ? visibleTickets.map(ticket => `
+                <button type="button" data-ticket-id="${escapeHtml(ticket.id)}" class="w-full flex items-center justify-between gap-3 border-b border-gray-200 bg-white px-3 py-3 text-left">
+                    <span class="min-w-0">
+                        <strong class="block truncate text-sm text-gray-900">${escapeHtml(ticket.title)}</strong>
+                        <span class="mt-1 block truncate text-xs text-gray-500">${escapeHtml(ticket.date)} · ${escapeHtml(ticket.theater)}</span>
+                    </span>
+                    <span class="flex-shrink-0 text-xs font-semibold text-gray-700">★ ${Number(ticket.rating).toFixed(1)}</span>
+                </button>
+            `).join('') : '<p class="py-8 text-center text-sm text-gray-500">표시할 관람 기록이 없습니다.</p>';
+
+            ticketbookList.querySelectorAll('[data-ticket-id]').forEach(item => {
+                item.addEventListener('click', () => showTicketDetail(item.dataset.ticketId));
+            });
+        }
+
+        function renderCalendar() {
+            const monthStart = new Date(calendarYear, calendarMonthIndex, 1);
+            const daysInMonth = new Date(calendarYear, calendarMonthIndex + 1, 0).getDate();
+            document.getElementById('calendar-month').textContent = `${calendarYear}년 ${calendarMonthIndex + 1}월`;
+            const cells = Array.from({ length: monthStart.getDay() }, () => '<div class="min-h-12 border-b border-r border-gray-300"></div>');
+
+            for (let day = 1; day <= daysInMonth; day += 1) {
+                const date = `${calendarYear}.${String(calendarMonthIndex + 1).padStart(2, '0')}.${String(day).padStart(2, '0')}`;
+                const hasTicket = tickets.some(ticket => ticket.date === date);
+                const isSelected = selectedCalendarDate === date;
+                cells.push(`<button type="button" data-date="${date}" aria-pressed="${isSelected}" class="min-h-12 border-b border-r border-gray-300 text-sm ${isSelected ? 'bg-gray-300 font-bold' : 'bg-white'}">${day}${hasTicket ? '<span class="block text-[9px] text-gray-600">관람</span>' : ''}</button>`);
+            }
+            calendarDays.innerHTML = cells.join('');
+
+            const [year, month, day] = selectedCalendarDate.split('.').map(Number);
+            document.getElementById('calendar-selected-date').textContent = `${year}년 ${month}월 ${day}일`;
+            const dayTickets = tickets.filter(ticket => ticket.date === selectedCalendarDate);
+            document.getElementById('calendar-events').innerHTML = dayTickets.length ? dayTickets.map(ticket => `
+                <button type="button" data-ticket-id="${escapeHtml(ticket.id)}" class="w-full border-b border-gray-200 py-3 text-left">
+                    <strong class="block text-sm">${escapeHtml(ticket.title)}</strong>
+                    <span class="mt-1 block text-xs text-gray-500">${escapeHtml(ticket.time)} · ${escapeHtml(ticket.theater)}</span>
+                </button>
+            `).join('') : '<p class="text-sm text-gray-500">이 날짜의 관람 기록이 없습니다.</p>';
+
+            document.querySelectorAll('#calendar-events [data-ticket-id]').forEach(item => {
+                item.addEventListener('click', () => showTicketDetail(item.dataset.ticketId));
+            });
+        }
+
+        function renderProfile() {
+            const average = tickets.length ? tickets.reduce((sum, ticket) => sum + Number(ticket.rating), 0) / tickets.length : 0;
+            const today = new Date();
+            const thisMonthCount = tickets.filter(ticket => {
+                const [year, month] = ticket.date.split('.').map(Number);
+                return year === today.getFullYear() && month === today.getMonth() + 1;
+            }).length;
+            document.getElementById('profile-total').textContent = `${tickets.length}편`;
+            document.getElementById('profile-average').textContent = average.toFixed(1);
+            document.getElementById('profile-month').textContent = `${thisMonthCount}편`;
+
+            const recentTickets = [...tickets].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5);
+            document.getElementById('profile-recent').innerHTML = recentTickets.length ? recentTickets.map(ticket => `
+                <div class="flex items-center justify-between gap-3 py-3">
+                    <span class="min-w-0"><strong class="block truncate text-sm">${escapeHtml(ticket.title)}</strong><span class="text-xs text-gray-500">${escapeHtml(ticket.date)}</span></span>
+                    <span class="flex-shrink-0 text-xs">★ ${Number(ticket.rating).toFixed(1)}</span>
+                </div>
+            `).join('') : '<p class="py-4 text-sm text-gray-500">아직 관람 기록이 없습니다.</p>';
+        }
+
+        // Render Ticket Functions
+        function renderTickets(data) {
+            container.innerHTML = '';
+            
+            if (!data || data.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            } else {
+                emptyState.classList.add('hidden');
+            }
+
+            if (currentViewMode === 'card') {
+                container.className = "space-y-4";
+                data.forEach(ticket => {
+                    const ticketEl = document.createElement('div');
+                    ticketEl.className = "ticket-shape p-4 border border-gray-200 transition-all hover:shadow-md cursor-pointer";
+                    ticketEl.onclick = () => showTicketDetail(ticket.id);
+                    
+                    ticketEl.innerHTML = `
+                        <div class="flex space-x-3">
+                            <img src="${ticket.posterUrl}" alt="${ticket.title}" class="w-20 h-28 object-cover rounded-lg border border-gray-200 flex-shrink-0">
+                            <div class="flex-1 min-w-0 flex flex-col justify-between">
+                                <div>
+                                    <div class="flex justify-between items-start">
+                                        <span class="text-[10px] font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">${escapeHtml(ticket.genre)}</span>
+                                        <span class="text-xs text-amber-500 font-bold">★ ${ticket.rating.toFixed(1)}</span>
+                                    </div>
+                                        <h3 class="font-bold text-gray-900 text-sm mt-1 truncate">${escapeHtml(ticket.title)}</h3>
+                                        <p class="text-[11px] text-gray-500 mt-0.5"><i class="fa-regular fa-calendar-check mr-1"></i>${escapeHtml(ticket.date)}</p>
+                                        <p class="text-[11px] text-gray-500"><i class="fa-solid fa-location-dot mr-1"></i>${escapeHtml(ticket.theater)}</p>
+                                </div>
+                                    <div class="text-[10px] text-gray-400 truncate">좌석: ${escapeHtml(ticket.seat)}</div>
+                            </div>
+                        </div>
+                        <div class="dashed-divider my-3"></div>
+                        <div class="flex justify-between items-center text-xs text-gray-600">
+                                <p class="italic text-gray-500 truncate flex-1 mr-2">"${escapeHtml(ticket.comment)}"</p>
+                                <span class="text-[10px] text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full flex-shrink-0">${escapeHtml(ticket.companion)}</span>
+                        </div>
+                    `;
+                    container.appendChild(ticketEl);
+                });
+            } else if (currentViewMode === 'grid') {
+                container.className = "grid grid-cols-2 gap-3";
+                data.forEach(ticket => {
+                    const gridEl = document.createElement('div');
+                    gridEl.className = "bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer";
+                    gridEl.onclick = () => showTicketDetail(ticket.id);
+
+                    gridEl.innerHTML = `
+                        <div class="relative h-44 bg-gray-100">
+                            <img src="${ticket.posterUrl}" alt="${ticket.title}" class="w-full h-full object-cover">
+                            <span class="absolute top-2 right-2 bg-black/60 text-amber-400 text-xs font-bold px-2 py-0.5 rounded-md backdrop-blur-sm">★ ${ticket.rating.toFixed(1)}</span>
+                        </div>
+                        <div class="p-2.5">
+                            <h4 class="font-bold text-xs text-gray-800 truncate">${escapeHtml(ticket.title)}</h4>
+                            <p class="text-[10px] text-gray-400 mt-1">${escapeHtml(ticket.date)}</p>
+                        </div>
+                    `;
+                    container.appendChild(gridEl);
+                });
+            } else if (currentViewMode === 'list') {
+                container.className = "bg-white rounded-xl border border-gray-200 divide-y divide-gray-100";
+                data.forEach(ticket => {
+                    const listEl = document.createElement('div');
+                    listEl.className = "p-3 flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer";
+                    listEl.onclick = () => showTicketDetail(ticket.id);
+
+                    listEl.innerHTML = `
+                        <div class="flex items-center space-x-3 min-w-0">
+                            <div class="w-2 h-2 rounded-full bg-indigo-500 flex-shrink-0"></div>
+                            <div class="truncate">
+                                <h4 class="font-bold text-xs text-gray-800 truncate">${escapeHtml(ticket.title)}</h4>
+                                <p class="text-[10px] text-gray-400">${escapeHtml(ticket.date)} · ${escapeHtml(ticket.theater)}</p>
+                            </div>
+                        </div>
+                        <div class="text-xs font-bold text-amber-500 ml-2 flex-shrink-0">★ ${ticket.rating.toFixed(1)}</div>
+                    `;
+                    container.appendChild(listEl);
+                });
+            }
+
+            // Update stats
+            statCount.textContent = `${tickets.length}편`;
+        }
+
+        // VIEW MODE SWITCHING LISTENERS
+        document.querySelectorAll('.bottom-nav-item').forEach(item => {
+            item.addEventListener('click', () => {
+                if (item.dataset.page === 'ticketbook' && !ticketForm.classList.contains('hidden')) {
+                    ticketForm.classList.add('hidden');
+                    document.getElementById('btn-show-ticket-form').setAttribute('aria-expanded', 'false');
+                }
+                showPage(item.dataset.page);
+            });
+        });
+
+        btnCard.addEventListener('click', () => switchViewMode('card'));
+        btnGrid.addEventListener('click', () => switchViewMode('grid'));
+        btnList.addEventListener('click', () => switchViewMode('list'));
+
+        function switchViewMode(mode) {
+            currentViewMode = mode;
+            [btnCard, btnGrid, btnList].forEach(btn => {
+                btn.className = "px-3 py-1.5 rounded-lg text-gray-500 hover:text-gray-800 transition-all";
+            });
+
+            if (mode === 'card') btnCard.className = "px-3 py-1.5 rounded-lg bg-white shadow-sm text-gray-800 transition-all font-semibold";
+            if (mode === 'grid') btnGrid.className = "px-3 py-1.5 rounded-lg bg-white shadow-sm text-gray-800 transition-all font-semibold";
+            if (mode === 'list') btnList.className = "px-3 py-1.5 rounded-lg bg-white shadow-sm text-gray-800 transition-all font-semibold";
+
+            renderTickets(filterAndSortTickets());
+        }
+
+        // SEARCH & SORT LOGIC
+        searchToggleBtn.addEventListener('click', () => {
+            const searchIsAvailable = ['home', 'ticketbook'].some(page => !document.getElementById(`page-${page}`).classList.contains('hidden'));
+            if (!searchIsAvailable) return;
+            const isOpen = searchBarContainer.dataset.open !== 'true';
+            searchBarContainer.dataset.open = String(isOpen);
+            searchBarContainer.classList.toggle('hidden', !isOpen);
+            if (isOpen) {
+                searchInput.focus();
+            }
+        });
+
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.trim();
+            if (query.length > 0) {
+                searchClearBtn.classList.remove('hidden');
+            } else {
+                searchClearBtn.classList.add('hidden');
+            }
+            renderTickets(filterAndSortTickets());
+            if (!document.getElementById('page-ticketbook').classList.contains('hidden')) renderTicketbook();
+        });
+
+        searchClearBtn.addEventListener('click', () => {
+            searchInput.value = '';
+            searchClearBtn.classList.add('hidden');
+            renderTickets(filterAndSortTickets());
+        });
+
+        sortSelect.addEventListener('change', () => {
+            renderTickets(filterAndSortTickets());
+            if (!document.getElementById('page-ticketbook').classList.contains('hidden')) renderTicketbook();
+        });
+
+        function filterAndSortTickets() {
+            const query = searchInput.value.toLowerCase().trim();
+            let result = tickets.filter(t => 
+                t.title.toLowerCase().includes(query) || 
+                t.theater.toLowerCase().includes(query) ||
+                t.comment.toLowerCase().includes(query) ||
+                t.date.toLowerCase().includes(query)
+            );
+
+            const sortVal = sortSelect.value;
+            if (sortVal === 'latest') {
+                result.sort((a, b) => new Date(b.date) - new Date(a.date));
+            } else if (sortVal === 'rating') {
+                result.sort((a, b) => b.rating - a.rating);
+            } else if (sortVal === 'title') {
+                result.sort((a, b) => a.title.localeCompare(b.title));
+            }
+
+            return result;
+        }
+
+        function resetSearch() {
+            searchInput.value = '';
+            searchClearBtn.classList.add('hidden');
+            renderTickets(filterAndSortTickets());
+            renderTicketbook();
+        }
+
+        document.getElementById('calendar-prev').addEventListener('click', () => changeCalendarMonth(-1));
+        document.getElementById('calendar-next').addEventListener('click', () => changeCalendarMonth(1));
+        calendarDays.addEventListener('click', event => {
+            const dayButton = event.target.closest('[data-date]');
+            if (!dayButton) return;
+            selectedCalendarDate = dayButton.dataset.date;
+            renderCalendar();
+        });
+
+        function changeCalendarMonth(offset) {
+            const nextMonth = new Date(calendarYear, calendarMonthIndex + offset, 1);
+            calendarYear = nextMonth.getFullYear();
+            calendarMonthIndex = nextMonth.getMonth();
+            const firstTicket = tickets.find(ticket => {
+                const [year, month] = ticket.date.split('.').map(Number);
+                return year === calendarYear && month === calendarMonthIndex + 1;
+            });
+            selectedCalendarDate = firstTicket?.date || `${calendarYear}.${String(calendarMonthIndex + 1).padStart(2, '0')}.01`;
+            renderCalendar();
+        }
+
+        document.getElementById('btn-show-ticket-form').addEventListener('click', event => {
+            const isOpen = ticketForm.classList.contains('hidden');
+            ticketForm.classList.toggle('hidden', !isOpen);
+            event.currentTarget.setAttribute('aria-expanded', String(isOpen));
+            if (isOpen) ticketForm.elements.title.focus();
+        });
+
+        document.getElementById('btn-cancel-ticket').addEventListener('click', () => {
+            ticketForm.reset();
+            ticketForm.classList.add('hidden');
+            document.getElementById('btn-show-ticket-form').setAttribute('aria-expanded', 'false');
+        });
+
+        ticketForm.elements.date.value = formatDate(new Date()).replaceAll('.', '-');
+        ticketForm.addEventListener('submit', event => {
+            event.preventDefault();
+            const formData = new FormData(ticketForm);
+            const title = String(formData.get('title')).trim();
+            if (!title) return;
+
+            const newTicket = {
+                id: `t-${Date.now()}`,
+                title,
+                date: String(formData.get('date')).replaceAll('-', '.'),
+                time: '시간 미입력',
+                theater: String(formData.get('theater')).trim() || '극장 미입력',
+                seat: '좌석 미입력',
+                rating: Number(formData.get('rating')),
+                comment: String(formData.get('comment')).trim() || '감상 기록 없음',
+                posterUrl: sampleTickets[0]?.posterUrl || '',
+                genre: '기타',
+                companion: '정보 없음'
+            };
+            tickets.unshift(newTicket);
+            try {
+                localStorage.setItem('film-log-tickets', JSON.stringify(tickets));
+            } catch (error) {
+                console.warn('관람 기록을 브라우저에 저장하지 못했습니다.', error);
+            }
+            ticketForm.reset();
+            ticketForm.elements.date.value = formatDate(new Date()).replaceAll('.', '-');
+            ticketForm.classList.add('hidden');
+            document.getElementById('btn-show-ticket-form').setAttribute('aria-expanded', 'false');
+            renderTickets(filterAndSortTickets());
+            renderTicketbook();
+            renderProfile();
+            showPage('ticketbook');
+        });
+
+        document.getElementById('btn-notification').addEventListener('click', () => {
+            document.querySelector('#btn-notification span').classList.add('hidden');
+            showPage('notifications');
+        });
+        document.getElementById('btn-notifications-home').addEventListener('click', () => showPage('home'));
+        window.addEventListener('popstate', () => showPage(location.hash.slice(1) || 'home', false));
+        window.addEventListener('hashchange', () => showPage(location.hash.slice(1) || 'home', false));
+
+        // INTERACTION HANDLERS
+        function showTicketDetail(ticketId) {
+            const item = tickets.find(t => t.id === ticketId);
+            if (item) {
+                alert(`[티켓 상세 보기]\n영화: ${item.title}\n일시: ${item.date} (${item.time})\n극장: ${item.theater}\n좌석: ${item.seat}\n내 한줄평: ${item.comment}`);
+            }
+        }
+
+        document.getElementById('btn-add-ticket').addEventListener('click', () => {
+            showPage('ticketbook');
+            ticketForm.classList.remove('hidden');
+            document.getElementById('btn-show-ticket-form').setAttribute('aria-expanded', 'true');
+            ticketForm.elements.title.focus();
+        });
+
+        // INITIAL RENDER ON LOAD
+        window.onload = function() {
+            renderTickets(tickets);
+            const requestedPage = location.hash.slice(1);
+            showPage(['home', 'ticketbook', 'calendar', 'profile', 'notifications'].includes(requestedPage) ? requestedPage : 'home', false);
+        };
+    </script>
+</body>
+</html>
