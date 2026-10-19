@@ -23,18 +23,14 @@
 
     <form class="body body--center" id="loginForm" novalidate>
       <div class="logo" aria-hidden="true">로고</div>
-      <h2 class="login__title">로그인하고<br>내 티켓북을 시작하세요</h2>
+      <h2 class="login__title">닉네임으로<br>내 티켓북을 시작하세요</h2>
       <p class="notice" id="loginReason"></p>
 
-      <button type="button" class="btn btn--full" data-provider="kakao">카카오로 계속하기</button>
-      <button type="button" class="btn btn--full" data-provider="google">Google로 계속하기</button>
-
-      <p class="or">또는 이메일로</p>
-      <label class="lb" for="email">이메일</label>
-      <input class="input" type="email" id="email" placeholder="name@example.com" autocomplete="email">
+      <label class="lb" for="nickname">닉네임</label>
+      <input class="input" type="text" id="nickname" placeholder="닉네임을 입력하세요" autocomplete="username" maxlength="20" required>
       <label class="lb" for="password">비밀번호</label>
       <div class="pw">
-        <input class="input" type="password" id="password" placeholder="8자 이상" autocomplete="current-password">
+        <input class="input" type="password" id="password" placeholder="영문자와 숫자 조합, 8자 이상" autocomplete="current-password" minlength="8" maxlength="64" required>
         <button type="button" class="pw__toggle" id="pwToggle">표시</button>
       </div>
 
@@ -42,8 +38,6 @@
       <button type="submit" class="btn btn--dark btn--full" id="loginSubmit">로그인</button>
       <div class="loginlinks">
         <button type="button" class="link" id="modeToggle">회원가입</button>
-        <span aria-hidden="true">·</span>
-        <button type="button" class="link" id="resetPw">비밀번호 찾기</button>
       </div>
     </form>
   </div>

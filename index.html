@@ -16,24 +16,48 @@
   <!-- Mobile Device Wrapper -->
   <div class="app">
     <header class="bar">
-      <h1 class="bar__title">내 티켓북</h1>
+      <h1 class="bar__title brand"><i class="fa-solid fa-film" aria-hidden="true"></i>FILM LOG</h1>
       <a class="avatar" id="avatarBtn" href="pages/login.html" aria-label="로그인"></a>
     </header>
 
     <main class="body">
       <section class="hero">
-        <p class="hero__tag">영화 포스터 티켓북</p>
-        <h2 class="hero__title">영화 포스터로 남기는<br>나만의 관람 기록</h2>
-        <p class="hero__desc">본 영화의 포스터를 티켓으로 저장하고, 한 줄 평과 다이어리를 함께 남겨 보세요.</p>
+        <div class="hero__copy">
+          <p class="hero__tag"><i class="fa-solid fa-film" aria-hidden="true"></i> FILM LOG <span>/</span> PERSONAL ARCHIVE</p>
+          <h2 class="hero__title">영화 포스터로<br>남기는 관람 기록</h2>
+          <p class="hero__desc">좋아한 장면과 감상을<br>나만의 티켓으로 모아보세요.</p>
+        </div>
+        <div class="hero__mark" aria-hidden="true">
+          <i class="fa-solid fa-ticket"></i>
+          <span>MY<br>ARCHIVE</span>
+          <strong>01</strong>
+        </div>
       </section>
 
-      <a class="searchbtn" href="pages/search.html">영화 제목을 검색해 보세요</a>
+      <a class="searchbtn" href="pages/search.html">
+        <span><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>영화 검색 바로가기</span>
+        <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+      </a>
 
       <div class="sec-head">
         <h3>최근 저장한 티켓</h3>
         <a class="link" href="pages/ticketbook.html">전체보기</a>
       </div>
       <div class="strip" id="homeRecent"></div>
+
+      <section aria-labelledby="communityTitle">
+        <div class="sec-head">
+          <div>
+            <h3 id="communityTitle">관객 관람평 랭킹</h3>
+            <p class="community-note">평점·인기도 및 관람평은 예시 데이터입니다.</p>
+          </div>
+        </div>
+        <div class="seg community-sort" role="group" aria-label="관람평 정렬">
+          <button type="button" class="is-on" data-review-sort="rating" aria-pressed="true">평점순</button>
+          <button type="button" data-review-sort="popularity" aria-pressed="false">인기도순</button>
+        </div>
+        <ol class="community-list" id="communityReviews"></ol>
+      </section>
     </main>
 
     <nav class="tabbar" aria-label="하단 메뉴">

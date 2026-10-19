@@ -8,7 +8,18 @@
     const STORE = { tickets: 'ticketbook.tickets', user: 'ticketbook.user', users: 'ticketbook.users' };
     const SESSION = { next: 'ticketbook.next', draft: 'ticketbook.draft', search: 'ticketbook.search', my: 'ticketbook.my' };
     const PRESET_TAGS = ['#설렘', '#혼자', '#눈물', '#친구와', '#재관람'];
-    const VIEW_TYPES = [{ id: 'theater', label: '극장' }, { id: 'ott', label: 'OTT' }];
+    const VIEW_TYPES = [
+        { id: 'theater', label: '극장', icon: 'fa-film' },
+        { id: 'ott', label: 'OTT', icon: 'fa-tv' }
+    ];
+    const COMMUNITY_REVIEWS = [
+        { movieId: 157336, rating: 4.9, quote: '극장에서 본 장면들이 아직도 머릿속에서 재생돼요.' },
+        { movieId: 129, rating: 4.9, quote: '어른이 되어 다시 보니 전혀 다른 감정으로 다가왔어요.' },
+        { movieId: 496243, rating: 4.8, quote: '작은 장면마다 의미가 숨어 있어 다시 보고 싶어져요.' },
+        { movieId: 27205, rating: 4.7, quote: '영화가 끝난 뒤에도 결말을 한참 생각하게 돼요.' },
+        { movieId: 313369, rating: 4.7, quote: '음악이 끝난 뒤에도 여운이 오래 남는 영화예요.' },
+        { movieId: 299534, rating: 4.6, quote: '함께 달려온 이야기가 한순간에 밀려와 뭉클했어요.' }
+    ];
     const LOGIN_REASON = {
         save: '티켓을 저장하려면 로그인이 필요해요',
         myTickets: '내 티켓북을 보려면 로그인이 필요해요',
@@ -26,14 +37,14 @@
         genres: [[28, '액션'], [18, '드라마'], [35, '코미디'], [878, 'SF'], [10749, '로맨스'], [53, '스릴러'], [16, '애니메이션'], [27, '공포']]
             .map(([id, name]) => ({ id, name })),
         movies: [
-            [496243, '기생충', '2019-05-30', [35, 53, 18], 98], [157336, '인터스텔라', '2014-11-06', [18, 878], 96],
-            [27205, '인셉션', '2010-07-21', [28, 878], 94], [299534, '어벤져스: 엔드게임', '2019-04-24', [28, 878], 93],
-            [313369, '라라랜드', '2016-12-07', [10749, 18], 88], [670, '올드보이', '2003-11-21', [18, 53], 85],
-            [129, '센과 치히로의 행방불명', '2001-07-20', [16], 90], [597, '타이타닉', '1997-12-19', [18, 10749], 87],
-            [396535, '부산행', '2016-07-20', [28, 27, 53], 84], [1042000, '서울의 봄', '2023-11-22', [18, 53], 82],
-            [1100000, '파묘', '2024-02-22', [27, 53], 80], [438631, '듄', '2021-10-20', [878, 18], 86]
-        ].map(([movieId, title, releaseDate, genreIds, popularity]) => ({
-            movieId, title, releaseDate, genreIds, popularity, posterPath: ""
+            [496243, '기생충', '2019-05-30', [35, 53, 18], 98, ['theater', 'ott']], [157336, '인터스텔라', '2014-11-06', [18, 878], 96, ['theater', 'ott']],
+            [27205, '인셉션', '2010-07-21', [28, 878], 94, ['theater', 'ott']], [299534, '어벤져스: 엔드게임', '2019-04-24', [28, 878], 93, ['theater', 'ott']],
+            [313369, '라라랜드', '2016-12-07', [10749, 18], 88, ['ott']], [670, '올드보이', '2003-11-21', [18, 53], 85, ['ott']],
+            [129, '센과 치히로의 행방불명', '2001-07-20', [16], 90, ['ott']], [597, '타이타닉', '1997-12-19', [18, 10749], 87, ['theater', 'ott']],
+            [396535, '부산행', '2016-07-20', [28, 27, 53], 84, ['theater', 'ott']], [1042000, '서울의 봄', '2023-11-22', [18, 53], 82, ['ott']],
+            [1100000, '파묘', '2024-02-22', [27, 53], 80, ['theater']], [438631, '듄', '2021-10-20', [878, 18], 86, ['theater', 'ott']]
+        ].map(([movieId, title, releaseDate, genreIds, popularity, availableOn]) => ({
+            movieId, title, releaseDate, genreIds, popularity, availableOn, posterPath: `asset/posters/${movieId}.jpg`
         }))
     };
     const FALLBACK_SAMPLES = {
@@ -55,7 +66,7 @@
     const dotDate = (s) => (s || '').replaceAll('-', '.');
     const uid = () => (crypto.randomUUID ? crypto.randomUUID() : `id-${Date.now()}-${Math.random().toString(16).slice(2)}`);
     const viewLabel = (t) => (VIEW_TYPES.find((v) => v.id === t) || {}).label || '';
-    const isEmail = (s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
+    const isValidPassword = (s) => /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/.test(s);
     const today = new Date();
     const params = new URLSearchParams(location.search);
 
@@ -92,9 +103,19 @@
     }
 
     /* 포스터 자리표시 — asset/posters/{movieId}.jpg 가 있으면 위에 덮어 보여 준다 */
-    function posterHtml(title, path, cls = '', badge = '') {
+    function posterHtml(title, path, cls = '', badge = '', badgeClass = '') {
         const img = path ? `<img src="${esc(ROOT + path)}" alt="" loading="lazy">` : '';
-        return `<div class="poster ${cls}"><span class="poster__t">${esc(title)}</span>${img}${badge ? `<span class="badge">${badge}</span>` : ''}</div>`;
+        return `<div class="poster ${cls}"><span class="poster__t">${esc(title)}</span>${img}${badge ? `<span class="badge ${badgeClass}">${badge}</span>` : ''}</div>`;
+    }
+    function availabilityBadge(movie) {
+        const types = [
+            ['theater', 'fa-film', '극장'],
+            ['ott', 'fa-tv', 'OTT']
+        ].filter(([type]) => movie.availableOn?.includes(type));
+        if (!types.length) return '';
+        const label = types.map(([, , name]) => name).join(' · ');
+        const icons = types.map(([, icon]) => `<i class="fa-solid ${icon}" aria-hidden="true"></i>`).join('');
+        return `<span class="availability-icons" role="img" aria-label="${label}" title="${label}">${icons}</span>`;
     }
     document.addEventListener('error', (e) => {
         if (e.target.tagName === 'IMG') e.target.classList.add('is-broken');
@@ -144,6 +165,28 @@
                 location.href = url('home');
             });
         }
+    }
+
+    function initTopButton() {
+        const host = $('.app') || $('body > div');
+        const scrollTargets = $$('.body, main.overflow-y-auto');
+        if (!host || !scrollTargets.length) return;
+
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'topbtn';
+        button.setAttribute('aria-label', '맨 위로');
+        button.title = '맨 위로';
+        button.innerHTML = '<i class="fa-solid fa-arrow-up" aria-hidden="true"></i>';
+        button.hidden = true;
+        host.appendChild(button);
+
+        let activeTarget = scrollTargets[0];
+        scrollTargets.forEach((target) => target.addEventListener('scroll', () => {
+            activeTarget = target;
+            button.hidden = target.scrollTop < 120;
+        }, { passive: true }));
+        button.addEventListener('click', () => activeTarget.scrollTo({ top: 0, behavior: 'smooth' }));
     }
 
     /* ===== 티켓 이미지 (Canvas → PNG) ===== */
@@ -221,6 +264,41 @@
         $('#homeRecent').innerHTML = recent.length
             ? recent.map((t) => `<a class="card" href="${url('detail')}?id=${t.ticketId}">${posterHtml(t.movieTitle, t.posterUrl)}<p class="card__t">${esc(t.movieTitle)}</p></a>`).join('')
             : `<p class="empty-note">${data.user ? '아직 저장한 티켓이 없어요.<br>영화를 검색해 첫 티켓을 만들어 보세요.' : '로그인하면 저장한 티켓이 이곳에 보여요.'}</p>`;
+
+        let sortBy = 'rating';
+        const renderCommunityReviews = () => {
+            const reviews = COMMUNITY_REVIEWS
+                .map((review) => ({ ...review, movie: movieById(review.movieId) }))
+                .filter((review) => review.movie)
+                .sort((a, b) => sortBy === 'rating'
+                    ? b.rating - a.rating || b.movie.popularity - a.movie.popularity
+                    : b.movie.popularity - a.movie.popularity || b.rating - a.rating);
+            $('#communityReviews').innerHTML = reviews.map(({ movie, rating, quote }, index) => `
+                <li class="community-review">
+                    <div class="community-review__top">
+                        <span class="community-review__rank">${String(index + 1).padStart(2, '0')}</span>
+                        ${posterHtml(movie.title, movie.posterPath, 'poster--xs community-review__poster')}
+                        <div class="community-review__movie">
+                            <strong>${esc(movie.title)}</strong>
+                            <span>${movie.releaseDate.slice(0, 4)} · ${esc(genreName(movie.genreIds[0]))}</span>
+                        </div>
+                        <strong class="community-review__score"><i class="fa-solid fa-star" aria-hidden="true"></i>${rating.toFixed(1)}</strong>
+                    </div>
+                    <p class="community-review__quote">“${esc(quote)}”</p>
+                    <div class="community-review__meta"><span>관객 한 줄 평</span><span>인기도 ${movie.popularity}</span></div>
+                </li>`).join('');
+        };
+        renderCommunityReviews();
+
+        $$('.community-sort [data-review-sort]').forEach((button) => button.addEventListener('click', () => {
+            sortBy = button.dataset.reviewSort;
+            $$('.community-sort [data-review-sort]').forEach((option) => {
+                const active = option === button;
+                option.classList.toggle('is-on', active);
+                option.setAttribute('aria-pressed', String(active));
+            });
+            renderCommunityReviews();
+        }));
     }
 
     /* =====================================================
@@ -232,7 +310,11 @@
 
         const filtered = () => {
             const q = s.query.trim().toLowerCase();
-            const list = data.movies.filter((m) => (!q || m.title.toLowerCase().includes(q)) && (!s.genreId || m.genreIds.includes(s.genreId)));
+            const list = data.movies.filter((m) =>
+                (!q || m.title.toLowerCase().includes(q)) &&
+                (s.viewType === 'all' || m.availableOn?.includes(s.viewType)) &&
+                (!s.genreId || m.genreIds.includes(s.genreId))
+            );
             const sorters = {
                 popularity: (a, b) => b.popularity - a.popularity,
                 latest: (a, b) => b.releaseDate.localeCompare(a.releaseDate),
@@ -243,7 +325,7 @@
 
         function renderChips() {
             $('#viewTypeChips').innerHTML = [{ id: 'all', label: '전체' }, ...VIEW_TYPES]
-                .map((v) => `<button type="button" class="chip ${s.viewType === v.id ? 'is-on' : ''}" data-viewtype="${v.id}">${v.label}</button>`).join('');
+                .map((v) => `<button type="button" class="chip ${s.viewType === v.id ? 'is-on' : ''}" data-viewtype="${v.id}">${v.icon ? `<i class="fa-solid ${v.icon}" aria-hidden="true"></i>` : ''}${v.label}</button>`).join('');
             $('#genreChips').innerHTML = [{ id: 0, name: '전체' }, ...data.genres]
                 .map((g) => `<button type="button" class="chip ${s.genreId === g.id ? 'is-on' : ''}" data-genre="${g.id}">${esc(g.name)}</button>`).join('');
         }
@@ -254,16 +336,17 @@
             $('#queryClear').hidden = !s.query;
             $('#searchEmpty').hidden = !empty;
             $('#movieGrid').hidden = empty;
-            $('#resultCount').textContent = empty ? '검색 결과 · 0편' : `${s.query || s.genreId ? '검색 결과' : '인기 영화'} ${list.length}편`;
+            $('#resultCount').textContent = empty ? '검색 결과 · 0편' : `${s.query || s.genreId || s.viewType !== 'all' ? '검색 결과' : '인기 영화'} ${list.length}편`;
             $('#movieGrid').innerHTML = list.map((m) => `
                 <a class="card" href="${url('write')}?movieId=${m.movieId}">
-                    ${posterHtml(m.title, m.posterPath)}
+                    ${posterHtml(m.title, m.posterPath, '', availabilityBadge(m), 'badge--availability')}
                     <p class="card__t">${esc(m.title)}</p>
                     <p class="card__m">${m.releaseDate.slice(0, 4)}${m.genreIds[0] ? ' · ' + esc(genreName(m.genreIds[0])) : ''}</p>
                 </a>`).join('');
             if (empty) {
                 const conds = [];
                 if (s.query) conds.push(['검색어', `“${esc(s.query)}”`, 'query']);
+                if (s.viewType !== 'all') conds.push(['관람 유형', s.viewType === 'theater' ? '극장' : 'OTT', 'viewType']);
                 if (s.genreId) conds.push(['장르', esc(genreName(s.genreId)), 'genre']);
                 $('#emptyCond').innerHTML = conds.map(([k, v, key]) => `<li><span>${k} <b>${v}</b></span><button type="button" data-clear="${key}">해제</button></li>`).join('');
             }
@@ -279,7 +362,7 @@
         $('#sortSelect').addEventListener('change', (e) => { s.sort = e.target.value; persist(); renderResults(); });
         $('#viewTypeChips').addEventListener('click', (e) => {
             const b = e.target.closest('[data-viewtype]'); if (!b) return;
-            s.viewType = b.dataset.viewtype; persist(); renderChips();
+            s.viewType = b.dataset.viewtype; persist(); renderChips(); renderResults();
         });
         $('#genreChips').addEventListener('click', (e) => {
             const b = e.target.closest('[data-genre]'); if (!b) return;
@@ -287,11 +370,13 @@
         });
         $('#emptyCond').addEventListener('click', (e) => {
             const b = e.target.closest('[data-clear]'); if (!b) return;
-            if (b.dataset.clear === 'query') { s.query = ''; $('#queryInput').value = ''; } else { s.genreId = 0; }
+            if (b.dataset.clear === 'query') { s.query = ''; $('#queryInput').value = ''; }
+            else if (b.dataset.clear === 'genre') s.genreId = 0;
+            else s.viewType = 'all';
             persist(); renderChips(); renderResults();
         });
         $('#resetFilterBtn').addEventListener('click', () => {
-            s.query = ''; s.genreId = 0; s.sort = 'popularity';
+            s.query = ''; s.viewType = 'all'; s.genreId = 0; s.sort = 'popularity';
             $('#queryInput').value = ''; $('#sortSelect').value = 'popularity';
             persist(); renderChips(); renderResults();
         });
@@ -454,46 +539,29 @@
             session.del(SESSION.next);
             location.replace(next || url('home'));
         }
-        const publicUser = ({ userId, email, nickname, authProvider }) => ({ userId, email, nickname, authProvider });
+        const publicUser = ({ userId, nickname }) => ({ userId, nickname });
 
         $('#loginForm').addEventListener('submit', (e) => {
             e.preventDefault();
-            const email = $('#email').value.trim();
+            const nickname = $('#nickname').value.trim();
             const pw = $('#password').value;
-            if (!isEmail(email)) return authError('이메일 형식을 확인해 주세요.');
-            if (pw.length < 8) return authError('비밀번호는 8자 이상이어야 해요.');
+            if (!nickname) return authError('닉네임을 입력해 주세요.');
+            if (!isValidPassword(pw)) return authError('비밀번호는 영문자와 숫자를 조합해 8자 이상 입력해 주세요.');
             // 실습용 목업 인증: 실제 서비스에서는 서버/인증 서비스가 처리해야 한다.
             const users = local.get(STORE.users, []);
-            const found = users.find((u) => u.email === email);
+            const found = users.find((u) => u.nickname.toLocaleLowerCase() === nickname.toLocaleLowerCase());
             if (mode === 'signup') {
-                if (found) return authError('이미 가입된 이메일이에요.');
-                const user = { userId: uid(), email, nickname: email.split('@')[0], authProvider: 'email', password: pw };
+                if (found) return authError('이미 사용 중인 닉네임이에요.');
+                const user = { userId: uid(), nickname, password: pw };
                 users.push(user);
                 local.set(STORE.users, users);
                 return finish(publicUser(user));
             }
-            if (!found || found.password !== pw) return authError('이메일 또는 비밀번호를 확인해 주세요.');
+            if (!found || found.password !== pw) return authError('닉네임 또는 비밀번호를 확인해 주세요.');
             finish(publicUser(found));
         });
 
-        $$('[data-provider]').forEach((b) => b.addEventListener('click', () => {
-            const provider = b.dataset.provider;
-            const users = local.get(STORE.users, []);
-            let user = users.find((u) => u.authProvider === provider);
-            if (!user) {
-                user = { userId: uid(), email: `${provider}@example.com`, nickname: provider === 'kakao' ? '카카오 사용자' : 'Google 사용자', authProvider: provider };
-                users.push(user);
-                local.set(STORE.users, users);
-            }
-            finish(publicUser(user));
-        }));
-
         $('#modeToggle').addEventListener('click', () => { mode = mode === 'login' ? 'signup' : 'login'; render(); });
-        $('#resetPw').addEventListener('click', () => {
-            if (!isEmail($('#email').value.trim())) return authError('비밀번호를 찾을 이메일을 먼저 입력해 주세요.');
-            $('#authError').hidden = true;
-            toast('재설정 안내 메일을 보냈다고 가정해요');
-        });
         $('#pwToggle').addEventListener('click', () => {
             const pw = $('#password'), hide = pw.type === 'password';
             pw.type = hide ? 'text' : 'password';
@@ -668,6 +736,7 @@
         data.movies = movieData.movies;
         data.genres = movieData.genres;
         data.samples = sampleData.samples;
+        initTopButton();
 
         // 로그인이 필요한 화면 (홈 · 검색 · 로그인 · 작성은 비로그인 허용)
         if (['ticketbook', 'calendar', 'detail'].includes(page) && needLogin('myTickets', { replace: true })) return;

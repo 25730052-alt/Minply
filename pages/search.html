@@ -27,10 +27,10 @@
         <button type="button" class="searchfield__clear" id="queryClear" aria-label="검색어 지우기" hidden>✕</button>
       </div>
 
-      <p class="hint">관람 유형 <span>(티켓 작성 시 기본값)</span></p>
+      <p class="hint">관람 유형 <span>(티켓 작성 시 기본값 · 포스터 아이콘은 예시)</span></p>
       <div class="chips" id="viewTypeChips"></div>
       <p class="hint">장르</p>
-      <div class="chips" id="genreChips"></div>
+      <div class="chips chips--scroll" id="genreChips" role="group" aria-label="장르 선택" tabindex="0"></div>
 
       <div class="resultbar">
         <span id="resultCount"></span>
