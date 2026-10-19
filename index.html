@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>나만의 모바일 티켓북 & 실관람평 다이어리</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -11,101 +11,38 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="css/style.css">
 </head>
-<body class="flex justify-center items-center min-h-screen p-0 bg-gray-200">
+<body class="flex justify-center items-center min-h-screen p-0 bg-gray-200" data-page="home" data-root="">
 
-    <!-- Mobile Device Simulator Wrapper -->
-    <div class="w-full max-w-md h-screen bg-white overflow-hidden flex flex-col relative">
-        
-        <!-- Status Bar -->
-        <div class="bg-white px-6 pt-3 pb-2 flex justify-between items-center text-xs text-gray-500 font-semibold z-30 select-none">
-            <span>09:41</span>
-            <div class="w-20 h-4 bg-black rounded-full mx-auto hidden sm:block"></div>
-            <div class="flex items-center space-x-1.5">
-                <i class="fa-solid fa-signal text-[10px]"></i>
-                <i class="fa-solid fa-wifi text-[10px]"></i>
-                <i class="fa-solid fa-battery-full text-xs"></i>
-            </div>
-        </div>
+  <!-- Mobile Device Wrapper -->
+  <div class="app">
+    <header class="bar">
+      <h1 class="bar__title">내 티켓북</h1>
+      <a class="avatar" id="avatarBtn" href="pages/login.html" aria-label="로그인"></a>
+    </header>
 
-        <!-- Header -->
-        <header class="bg-white px-4 py-3 border-b border-gray-200 flex items-center justify-between sticky top-0 z-20">
-            <div class="flex items-center space-x-2">
-                <div class="w-8 h-8 bg-gray-800 rounded-lg flex items-center justify-center text-white font-bold text-sm">
-                    <i class="fa-solid fa-ticket"></i>
-                </div>
-                <h1 class="font-bold text-lg text-gray-800 tracking-tight">FILM LOG</h1>
-            </div>
-            <div class="flex items-center space-x-3 text-gray-600">
-                <button id="btn-search-toggle" class="p-2 hover:bg-gray-100 rounded-full">
-                    <i class="fa-solid fa-magnifying-glass text-lg"></i>
-                </button>
-                <button id="btn-notification" class="p-2 hover:bg-gray-100 rounded-full relative">
-                    <i class="fa-regular fa-bell text-lg"></i>
-                </button>
-            </div>
-        </header>
+    <main class="body">
+      <section class="hero">
+        <p class="hero__tag">영화 포스터 티켓북</p>
+        <h2 class="hero__title">영화 포스터로 남기는<br>나만의 관람 기록</h2>
+        <p class="hero__desc">본 영화의 포스터를 티켓으로 저장하고, 한 줄 평과 다이어리를 함께 남겨 보세요.</p>
+      </section>
 
-        <!-- Main Content -->
-        <main id="main-content" class="flex-1 overflow-y-auto bg-gray-50 px-4 py-4 space-y-6">
-            <section class="bg-white p-4 rounded-2xl border border-gray-200 flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <div class="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center text-gray-600">
-                        <i class="fa-solid fa-user text-xl"></i>
-                    </div>
-                    <div>
-                        <div class="text-xs text-gray-400 font-medium">시네필 다이어리</div>
-                        <div class="font-bold text-gray-800 text-sm">김시네 님 <span class="text-xs text-gray-700 bg-gray-100 px-2 py-0.5 rounded-md ml-1">Lv. VIP</span></div>
-                    </div>
-                </div>
-                <div class="flex space-x-3 text-center border-l border-gray-200 pl-4">
-                    <div>
-                        <div class="text-xs text-gray-400">올해 관람</div>
-                        <div class="font-bold text-gray-800 text-base" id="stat-count">3편</div>
-                    </div>
-                    <div>
-                        <div class="text-xs text-gray-400">평균 별점</div>
-                        <div class="font-bold text-gray-700 text-base">★ 4.5</div>
-                    </div>
-                </div>
-            </section>
+      <a class="searchbtn" href="pages/search.html">영화 제목을 검색해 보세요</a>
 
-            <!-- Filter Section -->
-            <section class="flex items-center justify-between">
-                <div class="flex space-x-1 bg-gray-200 p-1 rounded-xl text-xs font-medium">
-                    <button id="view-mode-card" class="px-3 py-1.5 rounded-lg bg-white text-gray-800 font-semibold">
-                        <i class="fa-solid fa-ticket mr-1"></i> 티켓형
-                    </button>
-                </div>
-                <select id="sort-select" class="text-xs bg-transparent border-none font-semibold text-gray-600">
-                    <option value="latest">최신 관람순</option>
-                </select>
-            </section>
+      <div class="sec-head">
+        <h3>최근 저장한 티켓</h3>
+        <a class="link" href="pages/ticketbook.html">전체보기</a>
+      </div>
+      <div class="strip" id="homeRecent"></div>
+    </main>
 
-            <!-- Ticket List -->
-            <section id="ticket-container" class="space-y-4"></section>
-        </main>
+    <nav class="tabbar" aria-label="하단 메뉴">
+      <a href="index.html" class="is-on" aria-current="page"><i class="fa-solid fa-house" aria-hidden="true"></i>홈</a>
+      <a href="pages/search.html"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>검색</a>
+      <a href="pages/ticketbook.html"><i class="fa-solid fa-ticket" aria-hidden="true"></i>마이 티켓북</a>
+    </nav>
+  </div>
 
-        <!-- Navigation Bar -->
-        <nav class="bg-white border-t border-gray-200 px-6 py-2 flex justify-between items-center z-30 text-gray-500">
-            <a href="index.html" class="flex flex-col items-center text-gray-900 font-bold">
-                <i class="fa-solid fa-house text-lg"></i>
-                <span class="text-[10px] mt-1">홈</span>
-            </a>
-            <a href="pages/ticketbook.html" class="flex flex-col items-center hover:text-gray-900">
-                <i class="fa-solid fa-book-bookmark text-lg"></i>
-                <span class="text-[10px] mt-1">티켓북</span>
-            </a>
-            <a href="pages/calendar.html" class="flex flex-col items-center hover:text-gray-900">
-                <i class="fa-solid fa-calendar-days text-lg"></i>
-                <span class="text-[10px] mt-1">달력</span>
-            </a>
-            <a href="pages/mypage.html" class="flex flex-col items-center hover:text-gray-900">
-                <i class="fa-solid fa-user text-lg"></i>
-                <span class="text-[10px] mt-1">마이</span>
-            </a>
-        </nav>
-    </div>
-
-    <script src="js/app.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>

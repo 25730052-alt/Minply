@@ -2,42 +2,62 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Calendar - 나만의 모바일 티켓북</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>캘린더 - 나만의 모바일 티켓북</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
     <link rel="stylesheet" href="../css/style.css">
 </head>
-<body class="flex justify-center items-center min-h-screen p-0 bg-gray-200">
-    <div class="w-full max-w-md h-screen bg-white overflow-hidden flex flex-col relative">
-        <header class="bg-white px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-            <h1 class="font-bold text-lg text-gray-800">Calendar</h1>
-            <a href="../index.html" class="text-xs text-gray-500 hover:text-gray-800">홈으로</a>
-        </header>
-        <main class="flex-1 overflow-y-auto p-4 space-y-4">
-            <div class="border border-gray-300 p-6 text-center text-gray-500">
-                <p class="font-bold text-base">Calendar 와이어프레임 페이지</p>
-                <p class="text-xs mt-2">상세 기능 및 뷰 레이아웃이 배치되는 공간입니다.</p>
-            </div>
-        </main>
-        <nav class="bg-white border-t border-gray-200 px-6 py-2 flex justify-between items-center text-gray-500">
-            <a href="../index.html" class="flex flex-col items-center hover:text-gray-900">
-                <i class="fa-solid fa-house text-lg"></i>
-                <span class="text-[10px] mt-1">홈</span>
-            </a>
-            <a href="ticketbook.html" class="flex flex-col items-center hover:text-gray-900">
-                <i class="fa-solid fa-book-bookmark text-lg"></i>
-                <span class="text-[10px] mt-1">티켓북</span>
-            </a>
-            <a href="calendar.html" class="flex flex-col items-center text-gray-900 font-bold">
-                <i class="fa-solid fa-calendar-days text-lg"></i>
-                <span class="text-[10px] mt-1">달력</span>
-            </a>
-            <a href="mypage.html" class="flex flex-col items-center hover:text-gray-900">
-                <i class="fa-solid fa-user text-lg"></i>
-                <span class="text-[10px] mt-1">마이</span>
-            </a>
-        </nav>
-    </div>
+<body class="flex justify-center items-center min-h-screen p-0 bg-gray-200" data-page="calendar" data-root="../">
+
+  <!-- Mobile Device Wrapper -->
+  <div class="app">
+    <header class="bar">
+      <h1 class="bar__title">마이 티켓북</h1>
+      <button type="button" class="avatar" id="logoutBtn" aria-label="로그아웃"></button>
+    </header>
+
+    <main class="body">
+      <div class="seg" aria-label="보기 전환">
+        <a href="ticketbook.html">포스터 그리드</a>
+        <a class="is-on" href="calendar.html" aria-current="page">캘린더</a>
+      </div>
+
+      <div id="calendarView">
+        <div class="calnav">
+          <button type="button" class="iconbtn" id="prevMonth" aria-label="이전 달">‹</button>
+          <strong id="calTitle"></strong>
+          <button type="button" class="iconbtn" id="nextMonth" aria-label="다음 달">›</button>
+        </div>
+        <div class="cal cal--wk"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>
+        <div class="cal" id="calGrid"></div>
+
+        <div class="chips chips--gap" id="myTagChips"></div>
+
+        <div class="sec-head sec-head--tight"><h3 id="calSelTitle"></h3></div>
+        <div class="list" id="calList"></div>
+      </div>
+
+      <section class="empty" id="myEmpty" hidden>
+        <div class="empty__icon" aria-hidden="true"><i class="fa-solid fa-ticket"></i></div>
+        <h3>아직 저장한 티켓이 없어요</h3>
+        <p>영화를 검색해 첫 티켓을 만들어 보세요.</p>
+        <div class="empty__btns">
+          <a class="btn btn--dark" href="search.html">영화 검색하기</a>
+        </div>
+      </section>
+    </main>
+
+    <nav class="tabbar" aria-label="하단 메뉴">
+      <a href="../index.html"><i class="fa-solid fa-house" aria-hidden="true"></i>홈</a>
+      <a href="search.html"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>검색</a>
+      <a href="ticketbook.html" class="is-on" aria-current="page"><i class="fa-solid fa-ticket" aria-hidden="true"></i>마이 티켓북</a>
+    </nav>
+  </div>
+
+  <script src="../js/app.js"></script>
 </body>
 </html>

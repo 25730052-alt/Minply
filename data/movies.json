@@ -1,0 +1,26 @@
+{
+  "genres": [
+    { "id": 28, "name": "액션" },
+    { "id": 18, "name": "드라마" },
+    { "id": 35, "name": "코미디" },
+    { "id": 878, "name": "SF" },
+    { "id": 10749, "name": "로맨스" },
+    { "id": 53, "name": "스릴러" },
+    { "id": 16, "name": "애니메이션" },
+    { "id": 27, "name": "공포" }
+  ],
+  "movies": [
+    { "movieId": 496243, "title": "기생충", "posterPath": "", "releaseDate": "2019-05-30", "genreIds": [35, 53, 18], "popularity": 98 },
+    { "movieId": 157336, "title": "인터스텔라", "posterPath": "", "releaseDate": "2014-11-06", "genreIds": [18, 878], "popularity": 96 },
+    { "movieId": 27205, "title": "인셉션", "posterPath": "", "releaseDate": "2010-07-21", "genreIds": [28, 878], "popularity": 94 },
+    { "movieId": 299534, "title": "어벤져스: 엔드게임", "posterPath": "", "releaseDate": "2019-04-24", "genreIds": [28, 878], "popularity": 93 },
+    { "movieId": 313369, "title": "라라랜드", "posterPath": "", "releaseDate": "2016-12-07", "genreIds": [10749, 18], "popularity": 88 },
+    { "movieId": 670, "title": "올드보이", "posterPath": "", "releaseDate": "2003-11-21", "genreIds": [18, 53], "popularity": 85 },
+    { "movieId": 129, "title": "센과 치히로의 행방불명", "posterPath": "", "releaseDate": "2001-07-20", "genreIds": [16], "popularity": 90 },
+    { "movieId": 597, "title": "타이타닉", "posterPath": "", "releaseDate": "1997-12-19", "genreIds": [18, 10749], "popularity": 87 },
+    { "movieId": 396535, "title": "부산행", "posterPath": "", "releaseDate": "2016-07-20", "genreIds": [28, 27, 53], "popularity": 84 },
+    { "movieId": 1042000, "title": "서울의 봄", "posterPath": "", "releaseDate": "2023-11-22", "genreIds": [18, 53], "popularity": 82 },
+    { "movieId": 1100000, "title": "파묘", "posterPath": "", "releaseDate": "2024-02-22", "genreIds": [27, 53], "popularity": 80 },
+    { "movieId": 438631, "title": "듄", "posterPath": "", "releaseDate": "2021-10-20", "genreIds": [878, 18], "popularity": 86 }
+  ]
+}

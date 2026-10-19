@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>영화 검색 - 나만의 모바일 티켓북</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="flex justify-center items-center min-h-screen p-0 bg-gray-200" data-page="search" data-root="../">
+
+  <!-- Mobile Device Wrapper -->
+  <div class="app">
+    <header class="bar">
+      <a class="iconbtn" href="../index.html" aria-label="홈으로">‹</a>
+      <h1 class="bar__title">영화 검색</h1>
+      <span class="bar__space"></span>
+    </header>
+
+    <main class="body">
+      <div class="searchfield">
+        <input id="queryInput" type="search" placeholder="영화 제목을 입력하세요" autocomplete="off" aria-label="영화 제목 검색">
+        <button type="button" class="searchfield__clear" id="queryClear" aria-label="검색어 지우기" hidden>✕</button>
+      </div>
+
+      <p class="hint">관람 유형 <span>(티켓 작성 시 기본값)</span></p>
+      <div class="chips" id="viewTypeChips"></div>
+      <p class="hint">장르</p>
+      <div class="chips" id="genreChips"></div>
+
+      <div class="resultbar">
+        <span id="resultCount"></span>
+        <select id="sortSelect" aria-label="정렬">
+          <option value="popularity">인기순</option>
+          <option value="latest">최신순</option>
+          <option value="title">제목순</option>
+        </select>
+      </div>
+
+      <div class="grid grid--2" id="movieGrid"></div>
+
+      <!-- 결과 없음 상태 -->
+      <section class="empty" id="searchEmpty" hidden>
+        <div class="empty__icon" aria-hidden="true">?</div>
+        <h3>조건에 맞는 영화가 없습니다</h3>
+        <p>검색어를 줄이거나 장르 필터를 바꿔 보세요.</p>
+        <ul class="empty__cond" id="emptyCond"></ul>
+        <div class="empty__btns">
+          <button type="button" class="btn btn--dark" id="resetFilterBtn">필터 모두 초기화</button>
+        </div>
+      </section>
+    </main>
+
+    <nav class="tabbar" aria-label="하단 메뉴">
+      <a href="../index.html"><i class="fa-solid fa-house" aria-hidden="true"></i>홈</a>
+      <a href="search.html" class="is-on" aria-current="page"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>검색</a>
+      <a href="ticketbook.html"><i class="fa-solid fa-ticket" aria-hidden="true"></i>마이 티켓북</a>
+    </nav>
+  </div>
+
+  <script src="../js/app.js"></script>
+</body>
+</html>
