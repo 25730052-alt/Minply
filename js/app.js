@@ -12,14 +12,6 @@
         { id: 'theater', label: '극장', icon: 'fa-film' },
         { id: 'ott', label: 'OTT', icon: 'fa-tv' }
     ];
-    const COMMUNITY_REVIEWS = [
-        { movieId: 157336, rating: 4.9, quote: '극장에서 본 장면들이 아직도 머릿속에서 재생돼요.' },
-        { movieId: 129, rating: 4.9, quote: '어른이 되어 다시 보니 전혀 다른 감정으로 다가왔어요.' },
-        { movieId: 496243, rating: 4.8, quote: '작은 장면마다 의미가 숨어 있어 다시 보고 싶어져요.' },
-        { movieId: 27205, rating: 4.7, quote: '영화가 끝난 뒤에도 결말을 한참 생각하게 돼요.' },
-        { movieId: 313369, rating: 4.7, quote: '음악이 끝난 뒤에도 여운이 오래 남는 영화예요.' },
-        { movieId: 299534, rating: 4.6, quote: '함께 달려온 이야기가 한순간에 밀려와 뭉클했어요.' }
-    ];
     const LOGIN_REASON = {
         save: '티켓을 저장하려면 로그인이 필요해요',
         myTickets: '내 티켓북을 보려면 로그인이 필요해요',
@@ -103,9 +95,11 @@
     }
 
     /* 포스터 자리표시 — asset/posters/{movieId}.jpg 가 있으면 위에 덮어 보여 준다 */
-    function posterHtml(title, path, cls = '', badge = '', badgeClass = '') {
-        const img = path ? `<img src="${esc(ROOT + path)}" alt="" loading="lazy">` : '';
-        return `<div class="poster ${cls}"><span class="poster__t">${esc(title)}</span>${img}${badge ? `<span class="badge ${badgeClass}">${badge}</span>` : ''}</div>`;
+    function posterHtml(title, path, cls = '', badge = '', badgeClass = '', source = '') {
+        const imagePath = path && /^https?:\/\//i.test(path) ? path : path ? ROOT + path : '';
+        const img = imagePath ? `<img src="${esc(imagePath)}" alt="${esc(title)} 포스터" loading="lazy">` : '';
+        const sourceMark = source ? `<span class="movie-source movie-source--${source}" title="${source === 'json' ? 'JSON 파일' : 'API'}에서 불러옴" aria-label="${source === 'json' ? 'JSON 파일' : 'API'}에서 불러옴">${source === 'json' ? 'J' : 'A'}</span>` : '';
+        return `<div class="poster ${cls}"><span class="poster__t">${esc(title)}</span>${img}${badge ? `<span class="badge ${badgeClass}">${badge}</span>` : ''}${sourceMark}</div>`;
     }
     function availabilityBadge(movie) {
         const types = [
@@ -267,25 +261,27 @@
 
         let sortBy = 'rating';
         const renderCommunityReviews = () => {
-            const reviews = COMMUNITY_REVIEWS
-                .map((review) => ({ ...review, movie: movieById(review.movieId) }))
-                .filter((review) => review.movie)
+            const reviews = data.movies
+                .filter((movie) => movie.voteCount >= 100)
                 .sort((a, b) => sortBy === 'rating'
-                    ? b.rating - a.rating || b.movie.popularity - a.movie.popularity
-                    : b.movie.popularity - a.movie.popularity || b.rating - a.rating);
-            $('#communityReviews').innerHTML = reviews.map(({ movie, rating, quote }, index) => `
+                    ? b.voteAverage - a.voteAverage || b.voteCount - a.voteCount
+                    : b.popularity - a.popularity)
+                .slice(0, 12);
+            $('#communityReviews').innerHTML = reviews.map((movie, index) => `
                 <li class="community-review">
-                    <div class="community-review__top">
-                        <span class="community-review__rank">${String(index + 1).padStart(2, '0')}</span>
-                        ${posterHtml(movie.title, movie.posterPath, 'poster--xs community-review__poster')}
-                        <div class="community-review__movie">
-                            <strong>${esc(movie.title)}</strong>
-                            <span>${movie.releaseDate.slice(0, 4)} · ${esc(genreName(movie.genreIds[0]))}</span>
+                    <a class="community-review__link" href="${url('movie')}?movieId=${movie.movieId}">
+                        <div class="community-review__top">
+                            <span class="community-review__rank">${String(index + 1).padStart(2, '0')}</span>
+                            ${posterHtml(movie.title, movie.posterPath, 'poster--xs community-review__poster', '', '', movie.source)}
+                            <div class="community-review__movie">
+                                <strong>${esc(movie.title)}</strong>
+                                <span>${movie.releaseDate.slice(0, 4)} · ${esc(genreName(movie.genreIds[0]))}</span>
+                            </div>
+                            <strong class="community-review__score"><i class="fa-solid fa-star" aria-hidden="true"></i>${Number(movie.voteAverage).toFixed(1)}</strong>
                         </div>
-                        <strong class="community-review__score"><i class="fa-solid fa-star" aria-hidden="true"></i>${rating.toFixed(1)}</strong>
-                    </div>
-                    <p class="community-review__quote">“${esc(quote)}”</p>
-                    <div class="community-review__meta"><span>관객 한 줄 평</span><span>인기도 ${movie.popularity}</span></div>
+                        <p class="community-review__overview">${esc(movie.overview || '등록된 줄거리가 없습니다.')}</p>
+                        <div class="community-review__meta"><span>TMDb 평점 · ${Number(movie.voteCount).toLocaleString()}명 참여</span><span>인기도 ${Number(movie.popularity).toFixed(0)}</span></div>
+                    </a>
                 </li>`).join('');
         };
         renderCommunityReviews();
@@ -307,12 +303,16 @@
     function initSearch() {
         const s = { query: '', viewType: 'all', genreId: 0, sort: 'popularity', ...session.get(SESSION.search, {}) };
         const persist = () => session.set(SESSION.search, s);
+        let nextApiPage = data.apiNextPage;
+        let nextApiOffset = data.apiNextOffset;
+        let nextApiRank = data.apiNextRank;
+        let apiHasMore = data.apiHasMore;
 
         const filtered = () => {
             const q = s.query.trim().toLowerCase();
             const list = data.movies.filter((m) =>
-                (!q || m.title.toLowerCase().includes(q)) &&
-                (s.viewType === 'all' || m.availableOn?.includes(s.viewType)) &&
+                (!q || m.title.toLowerCase().includes(q) || m.originalTitle?.toLowerCase().includes(q)) &&
+                (s.viewType === 'all' || !m.availableOn?.length || m.availableOn.includes(s.viewType)) &&
                 (!s.genreId || m.genreIds.includes(s.genreId))
             );
             const sorters = {
@@ -337,11 +337,12 @@
             $('#searchEmpty').hidden = !empty;
             $('#movieGrid').hidden = empty;
             $('#resultCount').textContent = empty ? '검색 결과 · 0편' : `${s.query || s.genreId || s.viewType !== 'all' ? '검색 결과' : '인기 영화'} ${list.length}편`;
+            $('#loadMoreMovies').hidden = !apiHasMore;
             $('#movieGrid').innerHTML = list.map((m) => `
-                <a class="card" href="${url('write')}?movieId=${m.movieId}">
-                    ${posterHtml(m.title, m.posterPath, '', availabilityBadge(m), 'badge--availability')}
+                <a class="card" href="${url('movie')}?movieId=${m.movieId}">
+                    ${posterHtml(m.title, m.posterPath, '', String(m.rank).padStart(2, '0'), 'badge--rank', m.source)}
                     <p class="card__t">${esc(m.title)}</p>
-                    <p class="card__m">${m.releaseDate.slice(0, 4)}${m.genreIds[0] ? ' · ' + esc(genreName(m.genreIds[0])) : ''}</p>
+                    <p class="card__m">${m.releaseDate.slice(0, 4)}${m.genreIds[0] ? ' · ' + esc(genreName(m.genreIds[0])) : ''}${m.voteAverage ? ` · ★ ${m.voteAverage.toFixed(1)}` : ''}</p>
                 </a>`).join('');
             if (empty) {
                 const conds = [];
@@ -379,6 +380,25 @@
             s.query = ''; s.viewType = 'all'; s.genreId = 0; s.sort = 'popularity';
             $('#queryInput').value = ''; $('#sortSelect').value = 'popularity';
             persist(); renderChips(); renderResults();
+        });
+        $('#loadMoreMovies').addEventListener('click', async (event) => {
+            const button = event.currentTarget;
+            button.disabled = true;
+            button.textContent = '불러오는 중';
+            const response = await loadJson(`api/movies?page=${nextApiPage}&offset=${nextApiOffset}&rankStart=${nextApiRank}`, null);
+            if (response?.movies?.length) {
+                data.movies.push(...response.movies);
+                nextApiPage = response.nextPage;
+                nextApiOffset = response.nextOffset;
+                nextApiRank = response.nextRank;
+                apiHasMore = response.hasMore;
+                button.textContent = '더 보기';
+                renderResults();
+            } else {
+                button.textContent = '불러오지 못했습니다. 다시 시도';
+                apiHasMore = true;
+            }
+            button.disabled = false;
         });
     }
 
@@ -727,22 +747,78 @@
         });
     }
 
+    async function initMovieDetail() {
+        const movieId = Number(params.get('movieId'));
+        let movie = movieById(movieId);
+        if (!movie && movieId) {
+            const response = await loadJson(`api/movie/${movieId}`, null);
+            movie = response?.movie;
+        }
+        if (!movie || (movie.releaseDate && movie.releaseDate > ymd(today))) {
+            $('#movieDetail').innerHTML = '<section class="empty"><h2>영화 정보를 찾을 수 없습니다</h2><a class="btn btn--dark" href="search.html">영화 검색</a></section>';
+            return;
+        }
+
+        const genres = movie.genreIds.map((id) => genreName(id)).filter(Boolean);
+        const sourceName = movie.source === 'json' ? 'J · JSON 파일' : 'A · TMDb API';
+        const reviewData = await loadJson(`api/movie/${movieId}/reviews`, { reviews: [] });
+        $('#movieDetail').innerHTML = `
+            <section class="movie-detail">
+                <div class="movie-detail__head">
+                    ${posterHtml(movie.title, movie.posterPath, 'poster--movie', movie.rank ? String(movie.rank).padStart(2, '0') : '', 'badge--rank', movie.source)}
+                    <div class="movie-detail__intro">
+                        ${movie.rank ? `<p class="movie-detail__rank">인기 순위 ${movie.rank}위</p>` : ''}
+                        <h2 class="movie-detail__title">${esc(movie.title)}</h2>
+                        ${movie.originalTitle && movie.originalTitle !== movie.title ? `<p class="movie-detail__original">${esc(movie.originalTitle)}</p>` : ''}
+                        <p class="movie-detail__meta">${movie.releaseDate ? movie.releaseDate.slice(0, 4) : '개봉일 정보 없음'}${genres.length ? ` · ${esc(genres.join(' · '))}` : ''}${movie.runtime ? ` · ${movie.runtime}분` : ''}</p>
+                        <p class="movie-detail__rating"><i class="fa-solid fa-star" aria-hidden="true"></i> ${Number(movie.voteAverage).toFixed(1)} <span>(${Number(movie.voteCount).toLocaleString()}명)</span></p>
+                    </div>
+                </div>
+                <p class="movie-detail__source">${sourceName}에서 불러온 개봉 영화 정보</p>
+                <section class="movie-detail__section">
+                    <h3>줄거리</h3>
+                    <p>${esc(movie.overview || '등록된 줄거리가 없습니다.')}</p>
+                </section>
+                <section class="movie-detail__section">
+                    <h3>관객 리뷰 ${reviewData.reviews.length ? `· ${reviewData.reviews.length}` : ''}</h3>
+                    ${reviewData.reviews.length ? reviewData.reviews.map((review) => `
+                        <article class="movie-review">
+                            <div class="movie-review__head"><strong>${esc(review.author)}</strong>${review.rating !== null && review.rating !== undefined ? `<span>★ ${Number(review.rating).toFixed(1)}</span>` : ''}</div>
+                            <p>${esc(review.content)}</p>
+                            ${review.createdAt ? `<time datetime="${esc(review.createdAt)}">${esc(review.createdAt)}</time>` : ''}
+                        </article>`).join('') : '<p class="empty-note">등록된 관객 리뷰가 없습니다.</p>'}
+                </section>
+                <a class="btn btn--dark btn--full" href="${url('write')}?movieId=${movie.movieId}">관람 기록 작성</a>
+            </section>`;
+    }
+
     /* ===== 시작 ===== */
     async function init() {
         const [movieData, sampleData] = await Promise.all([
             loadJson('data/movies.json', FALLBACK_MOVIES),
             loadJson('data/tickets.json', FALLBACK_SAMPLES)
         ]);
-        data.movies = movieData.movies;
+        const firstApiPage = movieData.nextApiPage || 6;
+        const firstApiOffset = movieData.nextApiOffset || 0;
+        const firstApiRank = movieData.movies.length;
+        const apiData = await loadJson(
+            `api/movies?page=${firstApiPage}&offset=${firstApiOffset}&rankStart=${firstApiRank}`,
+            { movies: [], nextPage: firstApiPage, nextOffset: firstApiOffset, nextRank: firstApiRank, hasMore: false }
+        );
+        data.movies = [...movieData.movies, ...apiData.movies];
         data.genres = movieData.genres;
         data.samples = sampleData.samples;
+        data.apiNextPage = apiData.nextPage;
+        data.apiNextOffset = apiData.nextOffset;
+        data.apiNextRank = apiData.nextRank;
+        data.apiHasMore = apiData.hasMore;
         initTopButton();
 
         // 로그인이 필요한 화면 (홈 · 검색 · 로그인 · 작성은 비로그인 허용)
         if (['ticketbook', 'calendar', 'detail'].includes(page) && needLogin('myTickets', { replace: true })) return;
 
         initAvatar();
-        const routes = { home: initHome, search: initSearch, write: initWrite, login: initLogin, ticketbook: initTicketbook, calendar: initCalendar, detail: initDetail };
+        const routes = { home: initHome, search: initSearch, movie: initMovieDetail, write: initWrite, login: initLogin, ticketbook: initTicketbook, calendar: initCalendar, detail: initDetail };
         (routes[page] || (() => {}))();
     }
 

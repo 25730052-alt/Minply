@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>영화 상세 - 나만의 모바일 티켓북</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="flex justify-center items-center min-h-screen p-0 bg-gray-200" data-page="movie" data-root="../">
+  <div class="app">
+    <header class="bar">
+      <a class="iconbtn" href="search.html" aria-label="영화 검색으로 돌아가기">‹</a>
+      <h1 class="bar__title">영화 상세</h1>
+      <span class="bar__space"></span>
+    </header>
+
+    <main class="body" id="movieDetail"></main>
+
+    <nav class="tabbar" aria-label="하단 메뉴">
+      <a href="../index.html"><i class="fa-solid fa-house" aria-hidden="true"></i>홈</a>
+      <a href="search.html" class="is-on" aria-current="page"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>검색</a>
+      <a href="ticketbook.html"><i class="fa-solid fa-ticket" aria-hidden="true"></i>마이 티켓북</a>
+    </nav>
+  </div>
+  <script src="../js/app.js"></script>
+</body>
+</html>

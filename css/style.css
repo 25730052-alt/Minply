@@ -177,6 +177,10 @@ ul { list-style: none; }
 .poster--xs { width: 44px; flex: none; }
 .poster--lg { width: 100%; aspect-ratio: 3 / 4; }
 .badge { position: absolute; top: 6px; left: 6px; padding: 1px 7px; background: var(--ink); color: #fff; font-size: 10px; font-weight: 800; }
+.badge--rank { min-width: 24px; padding: 2px 4px; text-align: center; }
+.movie-source { position: absolute; top: 6px; right: 6px; z-index: 3; display: grid; place-items: center; width: 17px; height: 17px; border: 1px solid var(--paper); border-radius: 50%; font-size: 9px; line-height: 1; font-weight: 900; }
+.movie-source--json { background: var(--paper); color: var(--ink); }
+.movie-source--api { background: var(--ink); color: var(--paper); }
 .badge--availability { display: flex; align-items: center; gap: 5px; padding: 5px 6px; }
 .availability-icons { display: flex; align-items: center; gap: 5px; font-size: 9px; line-height: 1; }
 
@@ -214,6 +218,9 @@ ul { list-style: none; }
 .community-sort { margin-bottom: 4px; }
 .community-list { list-style: none; }
 .community-review { padding: 12px 2px; border-bottom: 1px solid var(--g200); }
+.community-review__link { display: block; color: inherit; text-decoration: none; }
+.community-review__link:hover { background: var(--g50); }
+.community-review__link:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 .community-review__top { display: grid; grid-template-columns: 24px 44px minmax(0, 1fr) auto; align-items: center; gap: 8px; }
 .community-review__poster {
     width: 44px; border-color: var(--g500);
@@ -235,8 +242,29 @@ ul { list-style: none; }
 .community-review__movie span { margin-top: 1px; color: var(--g500); font-size: 10.5px; }
 .community-review__score { display: flex; align-items: center; gap: 4px; font-size: 13px; }
 .community-review__score i { font-size: 10px; }
-.community-review__quote { margin: 7px 0 5px 36px; color: var(--g700); font-size: 12px; line-height: 1.55; }
+.community-review__overview { margin: 7px 0 5px 36px; color: var(--g700); font-size: 12px; line-height: 1.55; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .community-review__meta { display: flex; justify-content: space-between; margin-left: 36px; color: var(--g500); font-size: 10px; }
+
+.movie-detail__head { display: grid; grid-template-columns: 104px minmax(0, 1fr); align-items: start; gap: 14px; }
+.poster--movie { width: 104px; flex: none; }
+.movie-detail__intro { min-width: 0; }
+.movie-detail__rank { color: var(--g500); font-size: 11px; font-weight: 700; }
+.movie-detail__title { margin-top: 5px; font-size: 19px; font-weight: 900; line-height: 1.3; word-break: keep-all; }
+.movie-detail__original { margin-top: 4px; color: var(--g500); font-size: 11px; overflow-wrap: anywhere; }
+.movie-detail__meta { margin-top: 8px; color: var(--g500); font-size: 11px; line-height: 1.5; }
+.movie-detail__rating { margin-top: 10px; font-size: 14px; font-weight: 800; }
+.movie-detail__rating i { color: var(--g700); font-size: 12px; }
+.movie-detail__rating span { color: var(--g500); font-size: 10px; font-weight: 400; }
+.movie-detail__source { margin-top: 14px; padding: 8px 0; border-top: 1px solid var(--g200); border-bottom: 1px solid var(--g200); color: var(--g500); font-size: 11px; }
+.movie-detail__source strong { color: var(--ink); }
+.movie-detail__section { margin: 20px 0; }
+.movie-detail__section h3 { margin-bottom: 7px; font-size: 13px; font-weight: 800; }
+.movie-detail__section p { color: var(--g700); font-size: 12px; line-height: 1.7; white-space: pre-line; }
+.movie-review { padding: 11px 0; border-top: 1px solid var(--g200); }
+.movie-review__head { display: flex; justify-content: space-between; gap: 8px; font-size: 11px; }
+.movie-review__head span { flex: none; color: var(--g700); font-weight: 700; }
+.movie-review p { margin-top: 6px; color: var(--g700); font-size: 12px; line-height: 1.65; white-space: pre-line; overflow-wrap: anywhere; }
+.movie-review time { display: block; margin-top: 6px; color: var(--g500); font-size: 10px; }
 
 /* ---------- 영화 검색 ---------- */
 .searchfield { position: relative; }
@@ -246,6 +274,9 @@ ul { list-style: none; }
 .grid { display: grid; gap: 14px 10px; }
 .grid--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.load-more { display: block; width: 100%; height: 40px; margin-top: 16px; border: 1px solid var(--g400); background: var(--paper); color: var(--ink); font-size: 12px; font-weight: 700; }
+.load-more[hidden] { display: none; }
+.load-more:disabled { opacity: .6; }
 .card { display: block; width: 100%; padding: 0; border: 0; background: none; text-align: left; }
 .card__t { margin-top: 6px; font-size: 12.5px; font-weight: 700; line-height: 1.3; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .card__m { font-size: 11px; color: var(--g500); }
