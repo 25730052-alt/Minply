@@ -39,11 +39,26 @@
         <div class="seg" id="writeViewType"></div>
         <input class="input input--gap" type="text" id="place" maxlength="30" placeholder="극장 이름 또는 OTT 서비스명">
 
+        <fieldset class="rating-field">
+          <legend class="lb">내 평점</legend>
+          <div class="rating-picker" id="ratingPicker" role="radiogroup" aria-label="내 평점 선택"></div>
+          <button type="button" class="rating-clear" id="ratingClear">평점 선택 안 함</button>
+        </fieldset>
+
         <label class="lb" for="oneLine">한 줄 평 <span class="count" id="oneLineCount">0/50</span></label>
         <input class="input" type="text" id="oneLine" maxlength="50" placeholder="이 영화를 한 줄로 남겨 보세요">
 
         <label class="lb" for="diary">실관람 다이어리</label>
         <textarea class="input input--area" id="diary" rows="5" placeholder="그날의 기분과 감상을 자유롭게 적어 보세요"></textarea>
+
+        <fieldset class="privacy-field">
+          <legend class="lb">공개 범위</legend>
+          <div class="privacy-options">
+            <label><input type="radio" name="visibility" value="private"><span><i class="fa-solid fa-lock" aria-hidden="true"></i> 나만 보기</span></label>
+            <label><input type="radio" name="visibility" value="public"><span><i class="fa-solid fa-earth-asia" aria-hidden="true"></i> 공개하기</span></label>
+          </div>
+          <p class="privacy-note">공개하면 한 줄 평이 영화 상세의 관객 리뷰에 표시돼요. 다이어리와 관람 장소는 공개되지 않아요.</p>
+        </fieldset>
 
         <p class="lb">태그</p>
         <div class="chips chips--wrap" id="tagChips"></div>
@@ -52,8 +67,6 @@
           <button type="button" class="btn" id="tagAddBtn">추가</button>
         </div>
 
-        <p class="lb">저장 시 티켓 Preview</p>
-        <div class="preview" id="writePreview"></div>
         <p class="formerr" id="writeError" role="alert" hidden></p>
       </form>
 

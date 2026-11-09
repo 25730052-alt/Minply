@@ -17,44 +17,45 @@
   <div class="app">
     <header class="bar">
       <h1 class="bar__title brand"><i class="fa-solid fa-film" aria-hidden="true"></i>FILM LOG</h1>
-      <a class="avatar" id="avatarBtn" href="pages/login.html" aria-label="로그인"></a>
+      <a class="avatar" id="avatarBtn" href="pages/login.html" aria-label="로그인"><i class="fa-solid fa-user" aria-hidden="true"></i></a>
     </header>
 
     <main class="body">
       <section class="hero">
         <div class="hero__copy">
-          <p class="hero__tag"><i class="fa-solid fa-film" aria-hidden="true"></i> FILM LOG <span>/</span> PERSONAL ARCHIVE</p>
           <h2 class="hero__title">영화 포스터로<br>남기는 관람 기록</h2>
           <p class="hero__desc">좋아한 장면과 감상을<br>나만의 티켓으로 모아보세요.</p>
         </div>
         <div class="hero__mark" aria-hidden="true">
           <i class="fa-solid fa-ticket"></i>
           <span>MY<br>ARCHIVE</span>
-          <strong>01</strong>
         </div>
       </section>
 
-      <a class="searchbtn" href="pages/search.html">
-        <span><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>영화 검색 바로가기</span>
-        <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
-      </a>
-
-      <div class="sec-head">
-        <h3>최근 저장한 티켓</h3>
-        <a class="link" href="pages/ticketbook.html">전체보기</a>
-      </div>
-      <div class="strip" id="homeRecent"></div>
+      <section aria-labelledby="cgvChartTitle">
+        <div class="sec-head">
+          <div>
+            <h3 id="cgvChartTitle">CGV 현재 상영작</h3>
+            <p class="community-note" id="cgvChartNote"></p>
+          </div>
+        </div>
+        <div class="cgv-chart-carousel">
+          <button type="button" class="cgv-chart-arrow" data-cgv-scroll="-1" aria-label="이전 상영작" disabled>
+            <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+          </button>
+          <div class="cgv-chart-grid" id="cgvMovieChart" role="list" aria-label="CGV 현재 상영작 목록" tabindex="0"></div>
+          <button type="button" class="cgv-chart-arrow" data-cgv-scroll="1" aria-label="다음 상영작">
+            <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+          </button>
+        </div>
+      </section>
 
       <section aria-labelledby="communityTitle">
         <div class="sec-head">
           <div>
-            <h3 id="communityTitle">실시간 관객 평점 랭킹</h3>
-            <p class="community-note">TMDb 평점·투표 수 기준 · 개봉작만 표시</p>
+            <h3 id="communityTitle">실시간 관객 평점 랭킹 TOP 10</h3>
+            <p class="community-note">CGV 상영작 1편 · OTT 스테디셀러 9편</p>
           </div>
-        </div>
-        <div class="seg community-sort" role="group" aria-label="관객 평점 정렬">
-          <button type="button" class="is-on" data-review-sort="rating" aria-pressed="true">평점순</button>
-          <button type="button" data-review-sort="popularity" aria-pressed="false">인기도순</button>
         </div>
         <ol class="community-list" id="communityReviews"></ol>
       </section>
@@ -62,7 +63,7 @@
 
     <nav class="tabbar" aria-label="하단 메뉴">
       <a href="index.html" class="is-on" aria-current="page"><i class="fa-solid fa-house" aria-hidden="true"></i>홈</a>
-      <a href="pages/search.html"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>검색</a>
+      <a href="pages/search.html"><i class="fa-solid fa-clapperboard" aria-hidden="true"></i>검색</a>
       <a href="pages/ticketbook.html"><i class="fa-solid fa-ticket" aria-hidden="true"></i>마이 티켓북</a>
     </nav>
   </div>
