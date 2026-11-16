@@ -33,7 +33,9 @@
 ### v0.4 — 9주차: 화면 고도화 (와이어프레임 0.4)
 
 **홈 (`index.html`)**
-- 추가: **CGV 현재 상영작 캐러셀** — `data/cgv-chart.json`(CGV 무비차트, 기준일 표기), 포스터·순위 배지·예매율, 좌우 화살표(처음/끝에서 자동 숨김), 카드 → 영화 상세
+- 변경: **무비차트 TOP 20** — CGV와 롯데시네마 로고로 영화관별 개봉작 예매율 순위를 전환. 각 공식 API를 5분 간격으로 갱신하고, `file://` 실행에서는 저장된 CGV 데이터와 롯데시네마 대체 목록을 표시
+- 추가: 포스터 캐러셀 자동 순환(마우스·터치·키보드 조작 중 정지, 모션 감소 설정 존중), 좌우 화살표, 영화관 공식 차트 링크
+- 변경: 히어로의 관람 기록 배너 전체를 눌러 영화 검색 화면으로 이동
 - 변경: 관객 평점 랭킹 → **실시간 관객 평점 랭킹 TOP 10** (CGV 상영작 중 에그지수 최고 1편 + OTT 스테디셀러 9편, 평점은 5점 만점으로 환산)
 - 제거: `영화 검색 바로가기` 버튼, `최근 저장한 티켓` 목록, 랭킹 `평점순/인기도순` 정렬 버튼, 히어로의 `PERSONAL ARCHIVE` 태그와 `01` 표시
 - 변경: 프로필 아바타에 사용자 아이콘 표시
@@ -58,7 +60,7 @@
 
 ### v0.2 — 6주차: 인터페이스 구조화
 
-- 사이트맵 기준 화면 구성: 홈 · 영화 검색 · 티켓 작성/저장 완료 · 로그인/회원가입 · 마이 티켓북(포스터 그리드/캘린더) · 티켓 상세 (+ 마이페이지)
+- 사이트맵 기준 화면 구성: 홈 · 영화 검색 · 티켓 작성/저장 완료 · 로그인/회원가입 · 마이 티켓북(포스터 모아보기/캘린더) · 티켓 상세 (+ 마이페이지)
 - 신규 화면: `search.html`, `write.html`, `login.html`, `detail.html`
 - 구조 변경: 화면마다 따로 있던 스크립트를 `js/app.js` 하나로 합치고 `body[data-page]`로 화면 구분, 공통 CSS 컴포넌트(`.app`, `.bar`, `.tabbar` 등) 도입
 - 데이터 분리: `data/movies.json`(장르·영화 예시 데이터), `data/tickets.json`(샘플 티켓)
@@ -99,7 +101,7 @@
 - **목표**
   1. 극장·OTT 구분 없이 본 영화를 **포스터 티켓 한 장**으로 빠르게 기록한다.
   2. 한 줄 평·다이어리·태그로 **그날의 감상**까지 남긴다.
-  3. 모은 티켓을 **포스터 그리드와 캘린더**로 다시 꺼내 본다.
+  3. 모은 티켓을 **포스터 모아보기와 캘린더**로 다시 꺼내 본다.
   4. 홈에서 **지금 상영작과 관객 평점**을 보고 다음 볼 영화를 고른다.
 
 ### 2.3 대상 사용자
@@ -117,7 +119,7 @@
 | 제약 | 이동 중 스마트폰 한 손 조작, 작성 절차가 길면 안 됨, 계정 기반 데이터 보존 필요 |
 | 결과 | 포스터 티켓북이 내 계정에 저장되고, 기기가 바뀌어도 그리드/캘린더로 다시 볼 수 있음 |
 
-**MVP 정의:** 로그인한 사용자가 외부 영화 API로 영화를 검색해 포스터 티켓을 만들고, 한 줄 평과 다이어리를 클라우드 DB에 저장한 뒤, 포스터 그리드/캘린더에서 자기 티켓북을 다시 볼 수 있으면 MVP가 성립한다.
+**MVP 정의:** 로그인한 사용자가 외부 영화 API로 영화를 검색해 포스터 티켓을 만들고, 한 줄 평과 다이어리를 클라우드 DB에 저장한 뒤, 포스터 모아보기/캘린더에서 자기 티켓북을 다시 볼 수 있으면 MVP가 성립한다.
 
 ### 2.4 기능 범위 (Must 5)
 
@@ -127,7 +129,7 @@
 | M2 | 사용자 인증 (회원가입/로그인) | 심화 | ⚠️ 닉네임·비밀번호 **목업 인증**(localStorage). Supabase/Firebase 연동 예정 |
 | M3 | 포스터 기반 모바일 티켓 생성기 | 필수 | ✅ 저장 완료 화면에서 티켓 미리보기 + 이미지 다운로드 |
 | M4 | 실관람평 다이어리 작성 및 저장 | 심화 | ⚠️ 작성 기능 완료, 저장은 localStorage. 클라우드 DB 연동 예정 |
-| M5 | 포스터 그리드 / 캘린더 모아보기 | 필수 | ✅ 마이 티켓북 그리드·캘린더 전환, 태그 필터, 정렬 |
+| M5 | 포스터 모아보기 / 캘린더 | 필수 | ✅ 마이 티켓북 보기 전환, 포스터 화면 태그 필터·정렬 |
 
 **Should / Could**
 
@@ -148,7 +150,7 @@
 ├─ 영화 검색·목록 (pages/search.html)
 │   └─ 티켓 작성 (pages/write.html) → 저장 완료
 ├─ 마이 티켓북
-│   ├─ 포스터 그리드 (pages/ticketbook.html)
+│   ├─ 포스터 모아보기 (pages/ticketbook.html)
 │   ├─ 캘린더 (pages/calendar.html)
 │   └─ 티켓 상세 (pages/detail.html)
 └─ 로그인 / 회원가입 (pages/login.html)
@@ -164,7 +166,7 @@
 |---|---|---|
 | 헤더 | 브랜드 로고, 프로필 아바타 | 아바타 → 로그인 화면 (로그인 상태에서는 프로필 동작) |
 | 히어로 | 서비스 소개 카피, MY ARCHIVE 마크 | 정적 콘텐츠 |
-| CGV 현재 상영작 | 가로 캐러셀, 순위 배지, 예매율, 좌우 화살표 | `cgv-chart.json` · 기준일 표시 · 카드 → 영화 상세 |
+| 무비차트 TOP 20 | CGV·롯데시네마 로고 전환, 자동 순환 가로 캐러셀, 예매율 순위 배지, 좌우 화살표 | 개봉일 지난 작품만 표시 · 예매율 내림차순 · 각 공식 API 5분마다 갱신 · 파일 실행 시 대체 데이터 · 카드 → 영화 상세/공식 상세 |
 | 관객 평점 랭킹 TOP 10 | 순위, 포스터, 제목, 구분, 평점(5점 만점) | CGV 1편 + OTT 스테디셀러 9편 · 항목 → 영화 상세 |
 | 탭바 | 홈(활성) / 검색 / 마이 티켓북 | 현재 페이지 `aria-current="page"` |
 
@@ -174,7 +176,7 @@
 - 모든 카드/항목은 키보드로 접근 가능한 링크다.
 
 #### ② 영화 검색·목록 — `pages/search.html`
-- 제목 검색(지우기 버튼), 관람 유형 칩(극장/OTT), 장르 칩(가로 스크롤)
+- 제목 검색(지우기 버튼), 관람 유형 칩(극장/OTT), 장르 칩(더보기로 펼침)
 - 정렬: 인기순 / 최신순 / 제목순, 2열 포스터 그리드, `더 보기` 페이지네이션(`/api/movies?offset=`)
 - **결과 없음 상태:** 적용된 조건 목록 + `필터 모두 초기화` 버튼
 - 검색 조건은 sessionStorage에 유지
@@ -191,9 +193,9 @@
 - 공개 시 한 줄 평만 영화 상세 리뷰에 노출 (다이어리·장소는 비공개)
 
 #### ⑤ 마이 티켓북 — `pages/ticketbook.html`, `pages/calendar.html`
-- `포스터 그리드 ↔ 캘린더` 세그먼트 전환, 태그 칩 필터
+- `포스터 모아보기 ↔ 캘린더` 세그먼트 전환, 포스터 화면 태그 칩 필터
 - 그리드: 3열, 정렬(최근/오래된 관람순, 제목순), 개수 표시
-- 캘린더: 월 이동, 관람한 날짜 표시, 선택한 날짜의 티켓 목록
+- 캘린더: 월 이동, 관람한 날짜를 점으로 표시, 선택한 날짜의 관람 건수 표시
 - **빈 상태:** `샘플 티켓 불러오기`, `영화 검색하기`
 - 비로그인 접근 시 로그인 화면으로 이동 (안내 문구: "내 티켓북을 보려면 로그인이 필요해요")
 
@@ -227,7 +229,7 @@
 | `ticketImageUrl` | string | 티켓 이미지 (예정) |
 | `createdAt` | string (ISO) | 정렬 |
 
-**Movie** — `movieId`, `title`, `releaseDate`, `posterPath`, `overview`, `genreIds[]`, `availableOn[]`, `source(cgv/json/api)`, `rank`, `voteAverage`, `voteCount`, `popularity` / CGV 전용: `cgvRank`, `cgvReservationRate`, `cgvEggIndex`, `cgvAdmissions`
+**Movie** — `movieId`, `title`, `releaseDate`, `posterPath`, `overview`, `genreIds[]`, `availableOn[]`, `source(cgv/lotte/json/api)`, `rank`, `voteAverage`, `voteCount`, `popularity` / CGV 전용: `cgvRank`, `cgvReservationRate`, `cgvEggIndex`, `cgvAdmissions` / 롯데시네마 전용: `movieCode`, `reservationRate`
 
 **User** — `userId`, `nickname` (목업 단계에서는 `password`도 localStorage에 저장 → 인증 서비스 연동 시 제거)
 
@@ -236,7 +238,7 @@
 | 구분 | 사용 기술 |
 |---|---|
 | 프론트엔드 | HTML, CSS(`css/style.css`), Vanilla JS(`js/app.js`, `body[data-page]`로 화면 분기), Tailwind CSS CDN, Font Awesome 6.4 |
-| 서버 | Python 표준 라이브러리 HTTP 서버(`js/server.py`), TMDB API 프록시 |
+| 서버 | Python 표준 라이브러리 HTTP 서버(`js/server.py`), TMDB·CGV·롯데시네마 API 프록시 |
 | 데이터 | `data/movies.json`, `data/cgv-chart.json`, `data/tickets.json`(샘플), `data/tmdb_5000_movies.csv`(대체 데이터) |
 | 저장소 | localStorage / sessionStorage (→ 클라우드 DB 예정) |
 
@@ -248,6 +250,8 @@
 | `GET /api/movie/{id}` | TMDB 영화 상세 |
 | `GET /api/movie/{id}/reviews` | TMDB 관객 리뷰 (최대 10개) |
 | `GET /api/review-ranking` | 인기작 리뷰 랭킹 |
+| `GET /api/cgv-chart` | CGV 개봉작 예매율 순위 |
+| `GET /api/lotte-chart` | 롯데시네마 개봉작 예매율 순위 |
 
 ### 2.9 비기능 요구사항
 
@@ -255,6 +259,7 @@
 - **접근성:** 아이콘에 `aria-hidden`, 버튼·링크에 `aria-label`, 탭바 `aria-current`, 오류 메시지 `role="alert"`
 - **보안:** 사용자 입력은 출력 시 HTML 이스케이프, API 키는 `js/.env`로 분리하고 정적 경로로 노출하지 않음
 - **오프라인 대체:** `file://`로 열어 JSON을 못 읽으면 `app.js` 내장 기본 데이터 사용
+- **영화관 차트 갱신:** 로컬 서버 실행 시 CGV와 롯데시네마 공식 차트 API를 5분 간격으로 확인한다. `file://` 직접 열기는 앱에 포함된 대체 차트 데이터를 표시한다.
 
 ### 2.10 알려진 이슈 (v0.4)
 
@@ -286,7 +291,7 @@ Minply-main/
 │  ├─ search.html        # 영화 검색·목록
 │  ├─ movie.html         # 영화 상세
 │  ├─ write.html         # 티켓 작성 / 저장 완료
-│  ├─ ticketbook.html    # 마이 티켓북 - 포스터 그리드
+│  ├─ ticketbook.html    # 마이 티켓북 - 포스터 모아보기
 │  ├─ calendar.html      # 마이 티켓북 - 캘린더
 │  ├─ detail.html        # 티켓 상세
 │  ├─ login.html         # 로그인 / 회원가입

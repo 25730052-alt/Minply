@@ -21,30 +21,49 @@
     </header>
 
     <main class="body">
-      <section class="hero">
+      <a class="hero hero--link" href="pages/search.html" aria-label="영화 검색 화면 열기">
         <div class="hero__copy">
-          <h2 class="hero__title">영화 포스터로<br>남기는 관람 기록</h2>
-          <p class="hero__desc">좋아한 장면과 감상을<br>나만의 티켓으로 모아보세요.</p>
+          <span class="hero__eyebrow">MY FILM LOG</span>
+          <h2 class="hero__title">영화 포스터로 남기는<br>나만의 관람 기록</h2>
+          <p class="hero__desc">영화를 검색하고 특별한 순간을 모아보세요.</p>
         </div>
-        <div class="hero__mark" aria-hidden="true">
-          <i class="fa-solid fa-ticket"></i>
-          <span>MY<br>ARCHIVE</span>
-        </div>
-      </section>
+        <span class="hero__action" aria-hidden="true"><i class="fa-solid fa-clapperboard"></i></span>
+      </a>
 
-      <section aria-labelledby="cgvChartTitle">
-        <div class="sec-head">
+      <section aria-labelledby="cinemaChartTitle">
+        <div class="sec-head cinema-chart-head">
           <div>
-            <h3 id="cgvChartTitle">CGV 현재 상영작</h3>
-            <p class="community-note" id="cgvChartNote"></p>
+            <h3 id="cinemaChartTitle">무비차트</h3>
           </div>
+          <div class="cinema-chart-selectors" role="group" aria-label="영화관 무비차트 선택">
+            <button type="button" class="cinema-chart-selector" data-chart-provider="cgv" aria-label="CGV 무비차트" aria-pressed="true">
+              <img src="https://cdn.cgv.co.kr/cgvpomscontent/ips/unitCnts/2025/1114/4c8da3708290405bb6400a6a553cade2.svg" alt="">
+            </button>
+            <button type="button" class="cinema-chart-selector" data-chart-provider="lotte" aria-label="롯데시네마 무비차트" aria-pressed="false">
+              <svg aria-hidden="true" viewBox="0 0 85 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <g fill="#FF243E">
+                  <path d="M23.1971 0.436035C17.32 0.436035 13.8125 4.15901 13.8125 8.74943C13.8125 13.3399 17.3292 17.0587 23.1971 17.0587C29.065 17.0587 32.5897 13.344 32.5897 8.74943C32.5897 4.15486 29.073 0.436035 23.1971 0.436035ZM23.1971 15.274C20.3886 15.274 18.2478 12.3479 18.2478 8.74943C18.2478 5.15097 20.3886 2.22489 23.1971 2.22489C26.0056 2.22489 28.1544 5.14682 28.1544 8.74943C28.1544 12.352 26.0137 15.274 23.1971 15.274Z"/>
+                  <path d="M33.3906 2.88896H39.5742V16.3655H44.228V2.88896H49.4444V1.05029H33.3906V2.88896Z"/>
+                  <path d="M51.1484 2.88896H56.3526V16.3655H61.0105V2.88896H67.1981V1.05029H51.1484V2.88896Z"/>
+                  <path d="M4.54888 13.6179V1.04614H0.0771484V14.5435C0.0771484 15.5479 0.874372 16.3655 1.85775 16.3655H13.2819V14.5352H5.43514C4.94547 14.5352 4.54888 14.1284 4.54888 13.6179Z"/>
+                  <path d="M69.7314 2.8682V14.5435C69.7314 15.5479 70.5287 16.3697 71.5121 16.3697H83.693V14.5601H75.0975C74.6038 14.5601 74.2072 14.1492 74.2072 13.647V9.13127H83.5554V7.33826H74.2072V3.76885C74.2072 3.2708 74.6038 2.8599 75.0975 2.8599H83.693V1.05029H71.5121C70.5287 1.05029 69.7314 1.86379 69.7314 2.87235V2.8682Z"/>
+                  <path d="M8.4619 27.381C7.86297 28.9042 6.45468 29.9999 4.34224 29.9999C1.62277 29.9999 0 28.182 0 25.9366C0 23.6912 1.59445 21.894 4.34224 21.894C6.56394 21.894 7.84678 22.9566 8.44167 24.4424H6.39802C6.01762 23.438 5.27301 22.7241 4.36247 22.7241C3.03107 22.7241 2.04364 24.181 2.04364 25.9366C2.04364 27.7919 3.09986 29.1491 4.36247 29.1491C5.25277 29.1491 6.05404 28.4476 6.43849 27.381H8.46595H8.4619Z"/>
+                  <path d="M16.458 22.2136H18.5624V29.6803H16.458V22.2136Z"/>
+                  <path d="M34.9845 29.0453C34.9845 29.3981 34.7579 29.6762 34.337 29.6762H33.2201C32.7102 29.6762 32.4876 29.4064 32.2691 29.0328L29.1854 23.8157V29.6762H27.0811V22.8403C27.0811 22.4875 27.2955 22.2095 27.7164 22.2095H28.9385C29.3877 22.2095 29.671 22.4793 29.8572 22.8113L32.8721 28.0284V22.2095H34.9764V29.0453H34.9845Z"/>
+                  <path d="M49.9739 25.2642V26.1483H45.6802V28.2567C45.6802 28.5597 45.7005 28.788 46.178 28.788H50.0346V29.6803H44.6321C44.0372 29.6803 43.584 29.5807 43.584 28.5971V23.2969C43.584 22.3257 44.0615 22.2136 44.5633 22.2136H50.0346V23.106H46.2266C45.8462 23.106 45.6802 23.1641 45.6802 23.6372V25.2642H49.9739Z"/>
+                  <path d="M62.2965 29.6803C62.0132 29.6803 61.7785 29.7716 61.5154 29.0494L59.7267 24.1519V29.6803H58.4844V22.8362C58.4844 22.4834 58.6908 22.2136 59.1319 22.2136H60.4714C60.9003 22.2136 61.2038 22.4834 61.3212 22.8362L62.7781 27.0904L64.3442 22.8362C64.4696 22.4834 64.7569 22.2136 65.1859 22.2136H66.6347C67.0636 22.2136 67.27 22.4834 67.27 22.8362V29.6803H65.1657V24.0191L63.2758 29.1283C63.0816 29.7094 62.8145 29.6803 62.5717 29.6803H62.2965Z"/>
+                  <path d="M81.9034 29.6803L81.1993 28.1862H77.2051L76.4928 29.6803H75.125L78.6376 22.7075C78.7752 22.417 79.0504 22.2136 79.3823 22.2136H80.0864C80.4101 22.2136 80.7015 22.4128 80.8391 22.7075L84.1089 29.6803H81.9075H81.9034ZM77.6259 27.3021H80.7784L79.5846 24.7537C79.4875 24.5628 79.3782 24.3802 79.2123 24.3802C79.026 24.3802 78.9007 24.5795 78.8319 24.7537L77.63 27.3021H77.6259Z"/>
+                </g>
+              </svg>
+            </button>
+        </div>
         </div>
         <div class="cgv-chart-carousel">
-          <button type="button" class="cgv-chart-arrow" data-cgv-scroll="-1" aria-label="이전 상영작" disabled>
+          <button type="button" class="cgv-chart-arrow" data-chart-scroll="-1" aria-label="이전 영화 순위" disabled>
             <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
           </button>
-          <div class="cgv-chart-grid" id="cgvMovieChart" role="list" aria-label="CGV 현재 상영작 목록" tabindex="0"></div>
-          <button type="button" class="cgv-chart-arrow" data-cgv-scroll="1" aria-label="다음 상영작">
+          <div class="cgv-chart-grid" id="cinemaMovieChart" role="list" aria-label="CGV 무비차트 예매율 순위 상위 20편" aria-live="off" tabindex="0"></div>
+          <button type="button" class="cgv-chart-arrow" data-chart-scroll="1" aria-label="다음 영화 순위">
             <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
           </button>
         </div>
@@ -54,7 +73,6 @@
         <div class="sec-head">
           <div>
             <h3 id="communityTitle">실시간 관객 평점 랭킹 TOP 10</h3>
-            <p class="community-note">CGV 상영작 1편 · OTT 스테디셀러 9편</p>
           </div>
         </div>
         <ol class="community-list" id="communityReviews"></ol>

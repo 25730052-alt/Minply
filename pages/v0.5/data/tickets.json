@@ -1,0 +1,8 @@
+{
+  "samples": [
+    { "movieId": 157336, "dayOfMonth": 3, "viewType": "theater", "place": "용산 아이맥스", "oneLineReview": "시간이 이렇게 아플 수 있다니.", "diary": "엔딩 크레딧이 올라가도 한참 일어나지 못했다. 사운드가 몸을 울리는 경험이었다.", "tags": ["#눈물", "#혼자"] },
+    { "movieId": 496243, "dayOfMonth": 10, "viewType": "ott", "place": "넷플릭스", "oneLineReview": "다시 봐도 계단 장면에서 소름.", "diary": "주말 밤에 두 번째 감상. 처음엔 못 봤던 디테일이 보였다.", "tags": ["#재관람"] },
+    { "movieId": 313369, "dayOfMonth": 12, "viewType": "theater", "place": "CGV 강남", "oneLineReview": "마지막 장면의 여운이 길다.", "diary": "친구와 함께 봤다. 음악이 계속 머릿속에 맴돈다.", "tags": ["#설렘", "#친구와"] },
+    { "movieId": 438631, "dayOfMonth": 18, "viewType": "theater", "place": "롯데시네마 월드타워", "oneLineReview": "스크린이 클수록 좋은 영화.", "diary": "", "tags": ["#혼자"] }
+  ]
+}

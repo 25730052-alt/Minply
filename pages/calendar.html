@@ -24,7 +24,7 @@
 
     <main class="body">
       <div class="seg" aria-label="보기 전환">
-        <a href="ticketbook.html">포스터 그리드</a>
+        <a href="ticketbook.html">포스터 모아보기</a>
         <a class="is-on" href="calendar.html" aria-current="page">캘린더</a>
       </div>
 
@@ -37,10 +37,9 @@
         <div class="cal cal--wk"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>
         <div class="cal" id="calGrid"></div>
 
-        <div class="chips chips--gap" id="myTagChips"></div>
-
-        <div class="sec-head sec-head--tight"><h3 id="calSelTitle"></h3></div>
-        <div class="list" id="calList"></div>
+        <div class="cal-summary" role="status" aria-live="polite">
+          <strong id="calSelTitle"></strong>
+        </div>
       </div>
 
       <section class="empty" id="myEmpty" hidden>

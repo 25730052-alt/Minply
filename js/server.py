@@ -2,13 +2,15 @@ import csv
 import json
 import os
 import sys
+import threading
+import time
 from concurrent.futures import ThreadPoolExecutor
-from datetime import date
+from datetime import date, datetime
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.error import HTTPError, URLError
-from urllib.parse import parse_qs, urlencode, urlsplit
+from urllib.parse import parse_qs, urlencode, urljoin, urlsplit
 from urllib.request import Request, urlopen
 
 
@@ -21,6 +23,11 @@ TMDB_MOVIE_URL = "https://api.themoviedb.org/3/movie"
 TMDB_THEATER_URL = "https://api.themoviedb.org/3/movie/now_playing"
 TMDB_DISCOVER_URL = "https://api.themoviedb.org/3/discover/movie"
 POSTER_BASE_URL = "https://image.tmdb.org/t/p/w500"
+CGV_CHART_URL = "https://api.cgv.co.kr/met/dsp/scrDsp/searchScrDspCpotDtl"
+CGV_CHART_REFRESH_SECONDS = 300
+CGV_POSTER_BASE_URL = "https://cdn.cgv.co.kr"
+LOTTE_CHART_URL = "https://www.lottecinema.co.kr/LCWS/Movie/MovieData.aspx"
+LOTTE_CHART_REFRESH_SECONDS = 300
 JSON_MOVIE_COUNT = 100
 PAGE_SIZE = 20
 MAX_PAGE = 500
@@ -32,8 +39,21 @@ GENRE_NAMES = {
     10751: "가족", 10752: "전쟁", 10770: "TV 영화", 9648: "미스터리",
     878: "SF",
 }
+CGV_GENRE_IDS = {
+    "액션": 28, "어드벤처": 12, "모험": 12, "애니메이션": 16, "드라마": 18,
+    "공포": 27, "공포(호러)": 27, "코미디": 35, "역사": 36, "서부": 37,
+    "스릴러": 53, "범죄": 80, "다큐멘터리": 99, "뮤지컬": 10402,
+    "멜로/로맨스": 10749, "로맨스": 10749, "가족": 10751, "전쟁": 10752,
+    "미스터리": 9648, "SF": 878,
+}
 MOVIE_CATALOG = []
 REVIEW_RANKING_CACHE = None
+CGV_CHART_CACHE = None
+CGV_CHART_CACHE_UNTIL = 0
+CGV_CHART_CACHE_LOCK = threading.Lock()
+LOTTE_CHART_CACHE = None
+LOTTE_CHART_CACHE_UNTIL = 0
+LOTTE_CHART_CACHE_LOCK = threading.Lock()
 
 
 def load_local_env():
@@ -128,6 +148,215 @@ def normalize_movie(item, rank, source, available_on=None):
     if rank is not None:
         movie["rank"] = rank
     return movie
+
+
+def format_cgv_admissions(value):
+    try:
+        admissions = int(value or 0)
+    except (TypeError, ValueError):
+        return "정보 없음"
+    if admissions >= 10000:
+        return f"{admissions / 10000:.1f}".rstrip("0").rstrip(".") + "만"
+    return f"{admissions:,}"
+
+
+def normalize_cgv_chart(payload):
+    if payload.get("statusCode") != 0:
+        raise RuntimeError("CGV chart API returned an unsuccessful status")
+
+    chart_tabs = (
+        payload.get("data", {})
+        .get("dspScrdispMovctTab", {})
+        .get("dspScrdispMovctDtlList", [])
+    )
+    chart_tab = next((tab for tab in chart_tabs if tab.get("tabExpoNm", "").strip() == "무비차트"), None)
+    if not chart_tab:
+        raise ValueError("CGV movie chart is missing")
+
+    movies = []
+    for index, item in enumerate(chart_tab.get("movctSearchResDtoList") or []):
+        movie_id = int(item["movNo"])
+        poster_file = item.get("img320Fnm") or item.get("img126Fnm")
+        poster_path = urljoin(CGV_POSTER_BASE_URL + "/", (item.get("imgPath") or "").lstrip("/") + poster_file) if poster_file else None
+        release_date = item.get("realOpenYmd") or item.get("rlsYmd") or ""
+        if len(release_date) == 8 and release_date.isdigit():
+            release_date = f"{release_date[:4]}-{release_date[4:6]}-{release_date[6:]}"
+        try:
+            rank = int(item.get("curnAtktRnk") or index + 1)
+        except (TypeError, ValueError):
+            rank = index + 1
+        try:
+            reservation_rate = float(item.get("atktRate") or 0)
+        except (TypeError, ValueError):
+            reservation_rate = 0
+        try:
+            egg_index = float(item.get("egix") or 0)
+        except (TypeError, ValueError):
+            egg_index = 0
+        genre_ids = sorted({
+            CGV_GENRE_IDS[genre.strip()]
+            for genre in (item.get("genr") or "").split(",")
+            if genre.strip() in CGV_GENRE_IDS
+        })
+        movies.append({
+            "movieId": movie_id,
+            "title": (item.get("movNm") or "제목 미상").strip(),
+            "posterPath": poster_path,
+            "releaseDate": release_date,
+            "genreIds": genre_ids,
+            "overview": "",
+            "availableOn": ["theater"],
+            "source": "cgv",
+            "cgvChartRank": rank,
+            "cgvReservationRate": reservation_rate,
+            "cgvEggIndex": egg_index if egg_index > 0 else None,
+            "cgvAdmissions": format_cgv_admissions(item.get("accAdncCnt")),
+        })
+    today = date.today()
+    released_movies = []
+    for movie in movies:
+        try:
+            release_date = date.fromisoformat(movie["releaseDate"])
+        except ValueError:
+            continue
+        if release_date <= today:
+            released_movies.append(movie)
+    movies = released_movies
+    movies.sort(key=lambda movie: (-movie["cgvReservationRate"], movie["cgvChartRank"]))
+    for rank, movie in enumerate(movies, start=1):
+        movie["rank"] = rank
+        movie["cgvRank"] = rank
+    if not movies:
+        raise ValueError("CGV movie chart contains no released movies")
+
+    return {
+        "asOf": date.today().isoformat(),
+        "updatedAt": datetime.now().astimezone().isoformat(timespec="seconds"),
+        "isLive": True,
+        "movies": movies,
+    }
+
+
+def get_live_cgv_chart():
+    global CGV_CHART_CACHE, CGV_CHART_CACHE_UNTIL
+    with CGV_CHART_CACHE_LOCK:
+        if CGV_CHART_CACHE is not None and time.monotonic() < CGV_CHART_CACHE_UNTIL:
+            return CGV_CHART_CACHE
+
+        query = urlencode({"coCd": "A420", "unitCpotRelNo": 1})
+        request = Request(
+            f"{CGV_CHART_URL}?{query}",
+            headers={
+                "Accept": "application/json, text/plain, */*",
+                "Origin": "https://cgv.co.kr",
+                "Referer": "https://cgv.co.kr/cnm/cgvChart/movieChart?tabParam=75",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/130 Safari/537.36",
+            },
+        )
+        with urlopen(request, timeout=15) as response:
+            chart = normalize_cgv_chart(json.load(response))
+        CGV_CHART_CACHE = chart
+        CGV_CHART_CACHE_UNTIL = time.monotonic() + CGV_CHART_REFRESH_SECONDS
+        return chart
+
+
+def normalize_lotte_chart(payload):
+    if not isinstance(payload, dict):
+        raise ValueError("Lotte Cinema chart API returned an invalid payload")
+    if str(payload.get("IsOK", "")).lower() != "true":
+        raise RuntimeError("Lotte Cinema chart API returned an unsuccessful status")
+
+    movies_data = payload.get("Movies")
+    if not isinstance(movies_data, dict) or not isinstance(movies_data.get("Items"), list):
+        raise ValueError("Lotte Cinema chart API returned an invalid movie list")
+    items = movies_data["Items"]
+    movies = []
+    for item in items:
+        movie_code = str(item.get("RepresentationMovieCode") or "")
+        release_date = (item.get("ReleaseDate") or "")[:10]
+        if not movie_code.isdigit() or item.get("MoviePlayYN") != "Y":
+            continue
+        try:
+            parsed_release_date = date.fromisoformat(release_date)
+        except ValueError:
+            continue
+        if parsed_release_date > date.today():
+            continue
+
+        try:
+            reservation_rate = float(item.get("BookingRate") or 0)
+        except (TypeError, ValueError):
+            reservation_rate = 0
+        poster_url = (item.get("PosterURL") or "").strip().replace("http://", "https://", 1)
+        if poster_url:
+            poster_parts = urlsplit(poster_url)
+            poster_url = urljoin(f"https://{poster_parts.netloc}/", poster_parts.path.lstrip("/"))
+        movies.append({
+            "movieCode": movie_code,
+            "title": (item.get("MovieNameKR") or "제목 미상").strip(),
+            "posterPath": poster_url,
+            "releaseDate": release_date,
+            "reservationRate": reservation_rate,
+            "source": "lotte",
+        })
+
+    movies.sort(key=lambda movie: -movie["reservationRate"])
+    for rank, movie in enumerate(movies, start=1):
+        movie["rank"] = rank
+    if not movies:
+        raise ValueError("Lotte Cinema chart contains no released movies")
+
+    return {
+        "asOf": date.today().isoformat(),
+        "updatedAt": datetime.now().astimezone().isoformat(timespec="seconds"),
+        "isLive": True,
+        "movies": movies,
+    }
+
+
+def get_live_lotte_chart():
+    global LOTTE_CHART_CACHE, LOTTE_CHART_CACHE_UNTIL
+    with LOTTE_CHART_CACHE_LOCK:
+        if LOTTE_CHART_CACHE is not None and time.monotonic() < LOTTE_CHART_CACHE_UNTIL:
+            return LOTTE_CHART_CACHE
+
+        params = {
+            "MethodName": "GetMoviesToBe",
+            "channelType": "HO",
+            "osType": "Chrome",
+            "osVersion": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/130 Safari/537.36",
+            "multiLanguageID": "KR",
+            "division": 1,
+            "moviePlayYN": "Y",
+            "orderType": "1",
+            "blockSize": 1000,
+            "pageNo": 1,
+            "memberOnNo": "",
+            "imgdivcd": 2,
+        }
+        boundary = "----MinplyLotteChartBoundary"
+        body = (
+            f"--{boundary}\r\n"
+            "Content-Disposition: form-data; name=\"paramList\"\r\n\r\n"
+            f"{json.dumps(params, ensure_ascii=False, separators=(',', ':'))}\r\n"
+            f"--{boundary}--\r\n"
+        ).encode("utf-8")
+        request = Request(
+            LOTTE_CHART_URL,
+            data=body,
+            headers={
+                "Accept": "application/json, text/plain, */*",
+                "Content-Type": f"multipart/form-data; boundary={boundary}",
+                "Origin": "https://www.lottecinema.co.kr",
+                "Referer": "https://www.lottecinema.co.kr/NLCHS/Movie/List?flag=1",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/130 Safari/537.36",
+            },
+        )
+        with urlopen(request, timeout=15) as response:
+            chart = normalize_lotte_chart(json.load(response))
+        LOTTE_CHART_CACHE = chart
+        LOTTE_CHART_CACHE_UNTIL = time.monotonic() + LOTTE_CHART_REFRESH_SECONDS
+        return chart
 
 
 def write_json(movies):
@@ -292,6 +521,20 @@ def send_json(handler, status, payload):
 class MovieRequestHandler(SimpleHTTPRequestHandler):
     def do_GET(self):
         request = urlsplit(self.path)
+        if request.path == "/api/cgv-chart":
+            try:
+                send_json(self, 200, get_live_cgv_chart())
+            except (HTTPError, URLError, TimeoutError, RuntimeError, json.JSONDecodeError, KeyError, TypeError, ValueError) as error:
+                print(f"CGV chart refresh failed: {error}", file=sys.stderr)
+                send_json(self, 502, {"error": "CGV movie chart is currently unavailable"})
+            return
+        if request.path == "/api/lotte-chart":
+            try:
+                send_json(self, 200, get_live_lotte_chart())
+            except (HTTPError, URLError, TimeoutError, RuntimeError, json.JSONDecodeError, KeyError, TypeError, ValueError) as error:
+                print(f"Lotte Cinema chart refresh failed: {error}", file=sys.stderr)
+                send_json(self, 502, {"error": "Lotte Cinema movie chart is currently unavailable"})
+            return
         if request.path == "/api/review-ranking":
             try:
                 send_json(self, 200, {"reviews": build_review_ranking()})

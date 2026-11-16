@@ -30,8 +30,13 @@
 
       <p class="hint">관람 유형</p>
       <div class="chips" id="viewTypeChips"></div>
-      <p class="hint">장르</p>
-      <div class="chips chips--scroll" id="genreChips" role="group" aria-label="장르 선택" tabindex="0"></div>
+      <div class="search-filter-heading">
+        <p class="hint">장르</p>
+        <button type="button" class="filter-toggle" id="genreToggle" aria-expanded="false" aria-controls="genreChips">
+          더보기 <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+        </button>
+      </div>
+      <div class="chips chips--wrap" id="genreChips" role="group" aria-label="장르 선택" tabindex="0" hidden></div>
 
       <div class="resultbar">
         <span id="resultCount"></span>
