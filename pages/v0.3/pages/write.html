@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>티켓 작성 - 나만의 모바일 티켓북</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="flex justify-center items-center min-h-screen p-0 bg-gray-200" data-page="write" data-root="../">
+
+  <!-- Mobile Device Wrapper -->
+  <div class="app">
+    <!-- 4 티켓 작성 (입력 중) -->
+    <div class="app__view" id="formView" hidden>
+      <header class="bar">
+        <a class="iconbtn" href="search.html" id="writeBack" aria-label="뒤로">‹</a>
+        <h1 class="bar__title" id="writeTitle">티켓 작성</h1>
+        <span class="bar__space"></span>
+      </header>
+
+      <form class="body" id="writeForm" novalidate>
+        <section class="movie">
+          <div id="writePoster"></div>
+          <div>
+            <h2 class="movie__title" id="writeMovieTitle"></h2>
+            <p class="movie__meta" id="writeMovieMeta"></p>
+          </div>
+        </section>
+
+        <label class="lb" for="watchedAt">관람일</label>
+        <input class="input" type="date" id="watchedAt" required>
+
+        <p class="lb">관람 유형 · 장소</p>
+        <div class="seg" id="writeViewType"></div>
+        <input class="input input--gap" type="text" id="place" maxlength="30" placeholder="극장 이름 또는 OTT 서비스명">
+
+        <label class="lb" for="oneLine">한 줄 평 <span class="count" id="oneLineCount">0/50</span></label>
+        <input class="input" type="text" id="oneLine" maxlength="50" placeholder="이 영화를 한 줄로 남겨 보세요">
+
+        <label class="lb" for="diary">실관람 다이어리</label>
+        <textarea class="input input--area" id="diary" rows="5" placeholder="그날의 기분과 감상을 자유롭게 적어 보세요"></textarea>
+
+        <p class="lb">태그</p>
+        <div class="chips chips--wrap" id="tagChips"></div>
+        <div class="tagadd">
+          <input class="input" type="text" id="tagInput" maxlength="10" placeholder="직접 태그 추가">
+          <button type="button" class="btn" id="tagAddBtn">추가</button>
+        </div>
+
+        <p class="lb">저장 시 티켓 Preview</p>
+        <div class="preview" id="writePreview"></div>
+        <p class="formerr" id="writeError" role="alert" hidden></p>
+      </form>
+
+      <div class="foot">
+        <button type="submit" form="writeForm" class="btn btn--dark btn--full" id="saveBtn">티켓 저장</button>
+      </div>
+    </div>
+
+    <!-- 5 저장 완료 -->
+    <div class="app__view" id="savedView" hidden>
+      <header class="bar">
+        <span class="bar__space"></span>
+        <h1 class="bar__title">저장 완료</h1>
+        <a class="iconbtn" href="../index.html" aria-label="닫기">✕</a>
+      </header>
+      <main class="body">
+        <p class="banner">✓ 티켓이 저장되었습니다 <span>방금 전</span></p>
+        <section class="ticket" id="savedTicket"></section>
+        <div class="stack">
+          <a class="btn btn--dark btn--full" href="ticketbook.html">마이 티켓북에서 보기</a>
+          <button type="button" class="btn btn--full" id="savedDownload">티켓 이미지 다운로드</button>
+          <a class="btn btn--text btn--full" href="search.html">계속 검색하기</a>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="../js/app.js"></script>
+</body>
+</html>

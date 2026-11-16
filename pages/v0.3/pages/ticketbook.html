@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>마이 티켓북 - 나만의 모바일 티켓북</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="flex justify-center items-center min-h-screen p-0 bg-gray-200" data-page="ticketbook" data-root="../">
+
+  <!-- Mobile Device Wrapper -->
+  <div class="app">
+    <header class="bar">
+      <h1 class="bar__title">마이 티켓북</h1>
+      <button type="button" class="avatar" id="logoutBtn" aria-label="로그아웃"></button>
+    </header>
+
+    <main class="body">
+      <div class="seg" aria-label="보기 전환">
+        <a class="is-on" href="ticketbook.html" aria-current="page">포스터 그리드</a>
+        <a href="calendar.html">캘린더</a>
+      </div>
+      <div class="chips chips--gap" id="myTagChips"></div>
+
+      <div id="gridView">
+        <div class="resultbar">
+          <span id="myCount"></span>
+          <select id="mySort" aria-label="정렬">
+            <option value="recent">최근 관람순</option>
+            <option value="old">오래된 관람순</option>
+            <option value="title">제목순</option>
+          </select>
+        </div>
+        <div class="grid grid--3" id="myGrid"></div>
+      </div>
+
+      <!-- 빈 상태 -->
+      <section class="empty" id="myEmpty" hidden>
+        <div class="empty__icon" aria-hidden="true"><i class="fa-solid fa-ticket"></i></div>
+        <h3>아직 저장한 티켓이 없어요</h3>
+        <p>영화를 검색해 첫 티켓을 만들어 보세요.</p>
+        <div class="empty__btns">
+          <button type="button" class="btn" id="loadSampleBtn">샘플 티켓 불러오기</button>
+          <a class="btn btn--dark" href="search.html">영화 검색하기</a>
+        </div>
+      </section>
+    </main>
+
+    <nav class="tabbar" aria-label="하단 메뉴">
+      <a href="../index.html"><i class="fa-solid fa-house" aria-hidden="true"></i>홈</a>
+      <a href="search.html"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>검색</a>
+      <a href="ticketbook.html" class="is-on" aria-current="page"><i class="fa-solid fa-ticket" aria-hidden="true"></i>마이 티켓북</a>
+    </nav>
+  </div>
+
+  <script src="../js/app.js"></script>
+</body>
+</html>
