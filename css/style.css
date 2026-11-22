@@ -203,6 +203,7 @@ ul { list-style: none; }
 .movie-source--json { background: var(--paper); color: var(--ink); }
 .movie-source--cgv { background: #e7252a; color: #fff; }
 .movie-source--lotte { background: #ff243e; color: #fff; }
+.movie-source--megabox { background: #503396; color: #fff; }
 .movie-source--api { background: var(--ink); color: var(--paper); }
 .badge--availability { display: flex; align-items: center; gap: 5px; padding: 5px 6px; }
 .availability-icons { display: flex; align-items: center; gap: 5px; font-size: 9px; line-height: 1; }
@@ -244,6 +245,11 @@ ul { list-style: none; }
 .cinema-chart-selector img { width: 36px; max-height: 24px; object-fit: contain; }
 .cinema-chart-selector svg { width: 42px; height: auto; }
 .cinema-chart-selector:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.cinema-chart-selector--megabox { position: relative; }
+.cinema-chart-selector--megabox img { width: 52px; max-height: 18px; }
+.cinema-chart-selector--megabox .megabox-wordmark { display: none; color: #503396; font-size: 9.5px; font-weight: 900; letter-spacing: .02em; line-height: 1; }
+.cinema-chart-selector--megabox img.is-broken { display: none; }
+.cinema-chart-selector--megabox img.is-broken + .megabox-wordmark { display: block; }
 .cgv-chart-carousel { position: relative; }
 .cgv-chart-grid { display: flex; gap: 10px; overflow-x: auto; overscroll-behavior-x: contain; scroll-behavior: auto; scroll-snap-type: x mandatory; scrollbar-width: none; padding: 2px 17% 12px; }
 .cgv-chart-grid.is-animating { scroll-snap-type: none; }
@@ -262,6 +268,11 @@ ul { list-style: none; }
 .cgv-chart-arrow[data-chart-scroll="1"] { right: 3px; }
 .cgv-chart-arrow:disabled { opacity: .35; cursor: default; }
 .cgv-chart-arrow:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.chart-dots { display: flex; justify-content: center; align-items: center; gap: 5px; margin-top: 2px; padding: 4px 0 2px; }
+.chart-dots[hidden] { display: none; }
+.chart-dot { flex: none; width: 5px; height: 5px; padding: 0; border: 0; border-radius: 999px; background: #d4d3dc; cursor: pointer; transition: width .3s ease, background-color .3s ease; }
+.chart-dot.is-active { width: 16px; background: #6c5bb3; }
+.chart-dot:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) {
     .cgv-chart-card { transition: none; }
 }
@@ -449,3 +460,40 @@ ul { list-style: none; }
 /* ---------- 한 페이지 안의 상태 전환 뷰 (티켓 작성 ↔ 저장 완료) ---------- */
 .app__view { display: flex; flex-direction: column; flex: 1; min-height: 0; }
 .searchfield input::-webkit-search-cancel-button { display: none; }
+
+/* ---------- 둥근 모서리 (v0.4.2) — 버튼·입력칸·카드 등 각진 모서리를 모두 둥글게 ---------- */
+.btn, .load-more { border-radius: 12px; }
+.chip, .tag, .badge { border-radius: 999px; }
+.cgv-chart-card .badge--rank { border-radius: 0; }
+.seg { overflow: hidden; border-radius: 12px; }
+.input, .input--area, .resultbar select, select, textarea { border-radius: 10px; }
+.searchfield input { border-radius: 12px; }
+.formerr, .notice, .empty, .empty-note, .preview, .banner, .row, .d__review, .cal-summary { border-radius: 12px; }
+.ticket { border-radius: 16px; }
+.empty__cond li, .empty__cond button, .rating-clear, .privacy-options span, .cal__d { border-radius: 8px; }
+.profile-menu { border-radius: 12px; }
+.profile-menu button { border-radius: 8px; }
+.dialog__box { border-radius: 18px; }
+.dialog__btns .btn { border-radius: 10px; }
+.toast { border-radius: 999px; }
+.topbtn { border-radius: 50%; }
+.community-review__link { border-radius: 10px; }
+.cgv-chart-card .poster { border-radius: 14px; }
+.card .poster { border-radius: 12px; }
+.poster { border-radius: 10px; }
+.poster--xs { border-radius: 6px; }
+.movie-detail .poster--movie, .d .poster--lg { border-radius: 14px; }
+.stack--row .btn--text { border-radius: 12px; }
+/* PC에서 볼 때 모바일 화면 틀도 휴대폰처럼 둥글게 */
+@media (min-width: 431px) {
+    body .app { border-radius: 28px; overflow: hidden; box-shadow: 0 10px 30px rgba(0, 0, 0, .12); }
+}
+
+/* 저장 완료 화면 버튼 — 가로 3칸 */
+.stack--row { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.stack--row .btn {
+    min-height: 52px; padding: 6px 6px; flex-direction: column; gap: 4px;
+    font-size: 11.5px; line-height: 1.25; text-align: center; word-break: keep-all;
+}
+.stack--row .btn i { font-size: 14px; }
+.stack--row .btn--text { border-color: var(--g300); color: var(--g700); }

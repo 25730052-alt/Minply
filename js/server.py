@@ -28,6 +28,9 @@ CGV_CHART_REFRESH_SECONDS = 300
 CGV_POSTER_BASE_URL = "https://cdn.cgv.co.kr"
 LOTTE_CHART_URL = "https://www.lottecinema.co.kr/LCWS/Movie/MovieData.aspx"
 LOTTE_CHART_REFRESH_SECONDS = 300
+MEGABOX_CHART_URL = "https://www.megabox.co.kr/on/oh/oha/Movie/selectMovieList.do"
+MEGABOX_CHART_REFRESH_SECONDS = 300
+MEGABOX_IMAGE_BASE_URL = "https://img.megabox.co.kr"
 JSON_MOVIE_COUNT = 100
 PAGE_SIZE = 20
 MAX_PAGE = 500
@@ -54,6 +57,9 @@ CGV_CHART_CACHE_LOCK = threading.Lock()
 LOTTE_CHART_CACHE = None
 LOTTE_CHART_CACHE_UNTIL = 0
 LOTTE_CHART_CACHE_LOCK = threading.Lock()
+MEGABOX_CHART_CACHE = None
+MEGABOX_CHART_CACHE_UNTIL = 0
+MEGABOX_CHART_CACHE_LOCK = threading.Lock()
 
 
 def load_local_env():
@@ -359,6 +365,97 @@ def get_live_lotte_chart():
         return chart
 
 
+def parse_megabox_date(value):
+    digits = "".join(ch for ch in str(value or "") if ch.isdigit())[:8]
+    if len(digits) != 8:
+        return None
+    try:
+        return date(int(digits[:4]), int(digits[4:6]), int(digits[6:8]))
+    except ValueError:
+        return None
+
+
+def normalize_megabox_chart(payload):
+    if not isinstance(payload, dict) or not isinstance(payload.get("movieList"), list):
+        raise ValueError("Megabox chart API returned an invalid movie list")
+
+    movies = []
+    seen_codes = set()
+    for item in payload["movieList"]:
+        movie_code = str(item.get("rpstMovieNo") or item.get("movieNo") or "").strip()
+        if not movie_code.isdigit() or movie_code in seen_codes:
+            continue
+        release_date = parse_megabox_date(item.get("rfilmDe") or item.get("releaseDe"))
+        if release_date is None or release_date > date.today():
+            continue
+        try:
+            reservation_rate = float(item.get("boxoBokdRt") or item.get("bokdRt") or 0)
+        except (TypeError, ValueError):
+            reservation_rate = 0
+        image_path = str(item.get("imgPathNm") or item.get("movieImgPath") or "").strip()
+        poster_url = ""
+        if image_path:
+            poster_url = image_path if image_path.startswith("http") else urljoin(MEGABOX_IMAGE_BASE_URL + "/", image_path.lstrip("/"))
+            poster_url = poster_url.replace("http://", "https://", 1)
+        seen_codes.add(movie_code)
+        movies.append({
+            "movieCode": movie_code,
+            "title": str(item.get("movieNm") or "제목 미상").strip(),
+            "posterPath": poster_url,
+            "releaseDate": release_date.isoformat(),
+            "reservationRate": reservation_rate,
+            "overview": str(item.get("movieSynopCn") or "").strip(),
+            "source": "megabox",
+        })
+
+    movies.sort(key=lambda movie: -movie["reservationRate"])
+    for rank, movie in enumerate(movies, start=1):
+        movie["rank"] = rank
+    if not movies:
+        raise ValueError("Megabox chart contains no released movies")
+
+    return {
+        "asOf": date.today().isoformat(),
+        "updatedAt": datetime.now().astimezone().isoformat(timespec="seconds"),
+        "isLive": True,
+        "movies": movies,
+    }
+
+
+def get_live_megabox_chart():
+    global MEGABOX_CHART_CACHE, MEGABOX_CHART_CACHE_UNTIL
+    with MEGABOX_CHART_CACHE_LOCK:
+        if MEGABOX_CHART_CACHE is not None and time.monotonic() < MEGABOX_CHART_CACHE_UNTIL:
+            return MEGABOX_CHART_CACHE
+
+        params = {
+            "currentPage": "1",
+            "recordCountPerPage": "40",
+            "pageType": "ticketing",
+            "ibxYn": "N",
+            "onairYn": "Y",
+            "specialType": "",
+            "specialYn": "N",
+        }
+        request = Request(
+            MEGABOX_CHART_URL,
+            data=json.dumps(params).encode("utf-8"),
+            headers={
+                "Accept": "application/json, text/javascript, */*; q=0.01",
+                "Content-Type": "application/json; charset=UTF-8",
+                "Origin": "https://www.megabox.co.kr",
+                "Referer": "https://www.megabox.co.kr/movie",
+                "X-Requested-With": "XMLHttpRequest",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/130 Safari/537.36",
+            },
+        )
+        with urlopen(request, timeout=15) as response:
+            chart = normalize_megabox_chart(json.load(response))
+        MEGABOX_CHART_CACHE = chart
+        MEGABOX_CHART_CACHE_UNTIL = time.monotonic() + MEGABOX_CHART_REFRESH_SECONDS
+        return chart
+
+
 def write_json(movies):
     genres = [{"id": genre_id, "name": name} for genre_id, name in sorted(GENRE_NAMES.items())]
     with JSON_PATH.open("w", encoding="utf-8") as output:
@@ -534,6 +631,13 @@ class MovieRequestHandler(SimpleHTTPRequestHandler):
             except (HTTPError, URLError, TimeoutError, RuntimeError, json.JSONDecodeError, KeyError, TypeError, ValueError) as error:
                 print(f"Lotte Cinema chart refresh failed: {error}", file=sys.stderr)
                 send_json(self, 502, {"error": "Lotte Cinema movie chart is currently unavailable"})
+            return
+        if request.path == "/api/megabox-chart":
+            try:
+                send_json(self, 200, get_live_megabox_chart())
+            except (HTTPError, URLError, TimeoutError, RuntimeError, json.JSONDecodeError, KeyError, TypeError, ValueError) as error:
+                print(f"Megabox chart refresh failed: {error}", file=sys.stderr)
+                send_json(self, 502, {"error": "Megabox movie chart is currently unavailable"})
             return
         if request.path == "/api/review-ranking":
             try:
