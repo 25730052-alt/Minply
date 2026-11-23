@@ -26,6 +26,7 @@
       <div class="seg" aria-label="보기 전환">
         <a href="ticketbook.html">포스터 모아보기</a>
         <a class="is-on" href="calendar.html" aria-current="page">캘린더</a>
+        <a href="ticketbook.html?view=likes" data-seg="likes">찜한 영화</a>
       </div>
 
       <div id="calendarView">
@@ -61,6 +62,8 @@
 
   <!-- Supabase (클라우드 로그인·DB) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <!-- 영화관 최신 순위 (server.py가 자동으로 갱신) -->
+  <script src="../data/live-charts.js"></script>
   <script src="../js/app.js"></script>
 </body>
 </html>

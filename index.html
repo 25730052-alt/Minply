@@ -34,7 +34,6 @@
         <div class="sec-head cinema-chart-head">
           <div>
             <h3 id="cinemaChartTitle">무비차트</h3>
-            <span class="chart-status" id="chartStatus" aria-live="polite"></span>
           </div>
           <div class="cinema-chart-selectors" role="group" aria-label="영화관 무비차트 선택">
             <button type="button" class="cinema-chart-selector" data-chart-provider="cgv" aria-label="CGV 무비차트" aria-pressed="true">
@@ -73,7 +72,6 @@
           </button>
         </div>
         <div class="chart-dots" id="cinemaChartDots" role="group" aria-label="무비차트 영화 위치"></div>
-        <a class="chart-site-link" id="chartSiteLink" href="https://cgv.co.kr/" target="_blank" rel="noopener noreferrer">CGV에서 지금 순위 보기</a>
       </section>
 
       <section aria-labelledby="communityTitle">
@@ -95,6 +93,8 @@
 
   <!-- Supabase (클라우드 로그인·DB) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <!-- 영화관 최신 순위 (server.py가 자동으로 갱신) -->
+  <script src="data/live-charts.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

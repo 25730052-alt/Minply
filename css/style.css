@@ -502,8 +502,35 @@ body .app { border-radius: 0; height: 100vh; height: 100dvh; margin-top: 0; marg
 .chart-status { font-size: 10.5px; color: var(--g500, #8a8a8a); white-space: nowrap; }
 .chart-status.is-live { color: #2f9e5b; font-weight: 600; }
 .chart-status.is-live::before { content: ''; display: inline-block; width: 6px; height: 6px; margin-right: 4px; border-radius: 50%; background: currentColor; vertical-align: 1px; }
-/* 영화관 공식 순위 바로가기 */
-.chart-site-link { display: table; margin: 6px auto 0; padding: 5px 12px; border: 1px solid var(--g300, #d6d6d6); border-radius: 999px; font-size: 11.5px; color: var(--g700, #555); background: #fff; }
-.chart-site-link i { margin-left: 3px; font-size: 10px; }
-.chart-site-link:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+/* ---------- 찜(즐겨찾기) 하트 (v0.6) ---------- */
+.heart-btn {
+    display: inline-flex; align-items: center; justify-content: center; flex: none;
+    width: 34px; height: 34px; padding: 0; border: 0; border-radius: 50%;
+    background: rgba(255, 255, 255, .92); color: #9a9a9a; font-size: 16px; cursor: pointer;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .15); transition: transform .15s ease, color .15s ease;
+}
+.heart-btn[aria-pressed="true"], .heart-btn.is-on { color: #ff3b5c; }
+.heart-btn.is-pop { transform: scale(1.25); }
+.heart-btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.card-wrap { position: relative; min-width: 0; }
+/* 포스터와 같은 크기(2:3)의 투명 상자 안에서 하트를 포스터 오른쪽 아래에 둔다 */
+.card-wrap__poster { position: absolute; top: 0; left: 0; right: 0; aspect-ratio: 2 / 3; pointer-events: none; }
+.heart-btn--card { position: absolute; right: 6px; bottom: 6px; width: 30px; height: 30px; font-size: 14px; pointer-events: auto; }
+.grid--3 .heart-btn--card { width: 26px; height: 26px; font-size: 12px; right: 5px; bottom: 5px; }
+.movie-detail__titlerow { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.heart-btn--detail { margin-top: 2px; border: 1px solid var(--g300, #ddd); box-shadow: none; background: #fff; }
+.heart-icon { width: 55%; height: 55%; fill: none; stroke: currentColor; stroke-width: 2; transition: fill .15s ease; }
+.heart-btn[aria-pressed="true"] .heart-icon { fill: currentColor; }
 
+/* ---------- 모바일: 상단·하단 고정 (v0.6.2) ----------
+   페이지 전체가 움직이지 않게 막고, 가운데 내용(.body)만 스크롤한다.
+   주소창이 나타나고 사라져도 화면에 딱 맞도록 앱을 화면에 고정한다. */
+html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+body { min-height: 0 !important; }
+.body { overscroll-behavior-y: contain; }
+.bar, .tabbar { flex: none; }
+.bar { height: calc(52px + env(safe-area-inset-top)); padding-top: env(safe-area-inset-top); }
+.tabbar { height: calc(64px + env(safe-area-inset-bottom)); padding-bottom: calc(6px + env(safe-area-inset-bottom)); }
+@media (max-width: 430px) {
+    body .app { position: fixed; inset: 0; width: 100%; max-width: none; height: auto; }
+}

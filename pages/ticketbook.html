@@ -26,6 +26,7 @@
       <div class="seg" aria-label="보기 전환">
         <a class="is-on" href="ticketbook.html" aria-current="page">포스터 모아보기</a>
         <a href="calendar.html">캘린더</a>
+        <a href="ticketbook.html?view=likes" data-seg="likes">찜한 영화</a>
       </div>
       <div class="chips chips--gap" id="myTagChips"></div>
 
@@ -39,6 +40,20 @@
           </select>
         </div>
         <div class="grid grid--3" id="myGrid"></div>
+      </div>
+
+      <!-- 찜한 영화 (?view=likes) -->
+      <div id="likeView" hidden>
+        <div class="resultbar"><span id="likeCount"></span></div>
+        <div class="grid grid--3" id="likeGrid"></div>
+        <section class="empty" id="likeEmpty" hidden>
+          <div class="empty__icon" aria-hidden="true"><i class="fa-regular fa-heart"></i></div>
+          <h3>아직 찜한 영화가 없어요</h3>
+          <p>영화 포스터나 상세 화면의 하트를 눌러 보고 싶은 영화를 모아 보세요.</p>
+          <div class="empty__btns">
+            <a class="btn btn--dark" href="search.html">영화 검색하기</a>
+          </div>
+        </section>
       </div>
 
       <!-- 빈 상태 -->
@@ -62,6 +77,8 @@
 
   <!-- Supabase (클라우드 로그인·DB) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <!-- 영화관 최신 순위 (server.py가 자동으로 갱신) -->
+  <script src="../data/live-charts.js"></script>
   <script src="../js/app.js"></script>
 </body>
 </html>

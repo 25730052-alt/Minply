@@ -13,7 +13,7 @@
         url: '',
         anonKey: ''
     };
-    const STORE = { tickets: 'ticketbook.tickets', user: 'ticketbook.user', users: 'ticketbook.users', session: 'ticketbook.session', hasAccount: 'ticketbook.hasAccount' };
+    const STORE = { tickets: 'ticketbook.tickets', user: 'ticketbook.user', users: 'ticketbook.users', session: 'ticketbook.session', hasAccount: 'ticketbook.hasAccount', favorites: 'ticketbook.favorites' };
     const SESSION = { next: 'ticketbook.next', draft: 'ticketbook.draft', search: 'ticketbook.search', my: 'ticketbook.my' };
     const PRESET_TAGS = ['#설렘', '#혼자', '#눈물', '#친구와', '#재관람'];
     const FALLBACK_MOVIE_POSTERS = {
@@ -268,6 +268,39 @@
     /* 롯데시네마·메가박스 전용 영화의 상세 화면용 숫자 id (TMDB·CGV id와 겹치지 않는 구간) */
     const CHART_ID_BASE = { lotte: 800000000, megabox: 900000000 };
 
+    /* 지금 상영 중인 영화 줄거리 (영화관 순위 데이터에는 줄거리가 없는 경우가 많아 제목으로 채운다) */
+    const CHART_SYNOPSES = {
+        "폭설": "정년퇴임을 하루 앞둔 역장 갑수는 마지막 열차를 보내고 오랫동안 지켜 온 설로역을 떠날 준비를 한다. 그런데 폭설로 후임자의 도착이 늦어지며 역은 고립되고, 다음 날 나타난 후임자는 어딘가 수상하다. 불안한 인수인계가 이어지던 중 정체를 알 수 없는 시신이 발견된다.",
+        "극장판 마카앤로니: 기억탐험 대소동!": "늘 티격태격하지만 둘도 없는 단짝 마카와 로니. 사소한 오해로 크게 다툰 로니는 발명품으로 마카에 대한 기억을 지워 버리려다, 오히려 마카와 함께한 기억 속으로 빨려 들어간다. 뒤엉킨 기억 속에서 두 친구는 서로의 진심을 확인하고 무사히 돌아올 수 있을까.",
+        "아름다운 초저녁달": "학교에서 여학생들의 '왕자님'으로 불리는 요이 앞에, 또 한 명의 '왕자님' 코하쿠가 나타난다. 코하쿠는 거침없이 다가와 시험 삼아 사귀어 보자며 계약 연애를 제안하고, 사랑을 모르는 소년과 사랑과는 거리가 멀다고 여겨 온 소녀의 설레는 연애가 시작된다.",
+        "룩백": "학교 신문에 네 컷 만화를 그리며 자신감이 넘치는 후지노와, 그녀를 동경하지만 방 밖으로 나서지 못하는 쿄모토. 만화가 전부였던 시절, 두 소녀가 함께 보낸 사계절과 \"왜 만화를 그리는가\"라는 질문을 담은 고레에다 히로카즈 감독의 실사 영화.",
+        "모자 쓴 고양이": "상상력과 영감을 맡은 비밀 기관의 요원 모자 쓴 고양이는 새 동네에 적응하지 못하는 남매 가비와 세바스찬에게 웃음을 되찾아 주라는 임무를 받는다. 하지만 사고뭉치 고양이는 집을 엉망으로 만들고 마법 시계까지 잃어버리고, 남매와 함께 시계를 찾는 모험에 나선다.",
+        "옆에서 숨만 쉬어도 좋아": "웹툰 작가 지망생 화란과 래퍼를 꿈꾸는 이완은 대출까지 받아 마련한 집의 보증금을 사기로 날리고, 창문 하나 없는 지하 2층 방으로 밀려난다. 집도 돈도 잃고 서로만 남은 두 사람은 꿈과 사랑을 지키며 이곳을 벗어날 수 있을까.",
+        "실낙원": "9년 전 캠핑스쿨 버스 실종 사고로 아들을 잃은 소영은 AI 프로그램 속 어린 아들을 만나며 하루하루를 버텨 왔다. 그러던 어느 날 죽은 줄 알았던 아들 선우가 돌아오지만, 상처투성이 몸과 차가운 눈빛의 아들에게서 기억 속 아이를 찾지 못한 소영은 점점 드러나는 진실에 흔들린다.",
+        "극장판 카드캡터 체리 : 봉인된 카드": "6학년이 된 체리와 친구들은 마을 축제 연극 준비로 바쁘다. 홍콩으로 돌아갔던 샤오랑과 다시 만난 체리는 아직 전하지 못한 마음을 고백하려 하지만, 그 순간 이미 봉인했어야 할 크로우 카드의 기운이 나타나 새로운 사건이 시작된다.",
+        "흐르는 여정": "남편을 떠나보낸 춘희는 남편이 남긴 피아노와 자동차를 가지고 아파트로 이사한다. 조용하던 일상은 독일에서 온 지휘자 민준, 피아니스트를 꿈꾸는 소년 성찬을 만나며 조금씩 달라지고, 봄에서 가을로 계절이 흐르는 동안 그녀가 오래 계획해 온 여행도 다가온다.",
+        "극장판 마법소녀 마도카 마기카 ＜발푸르기스의 회천＞": "마도카를 붙잡기 위해 스스로 악마가 되어 세계를 다시 만든 호무라. 소원을 이뤄 준다는 소문과 소울 젬 없는 소녀의 마수 사냥이 이어지던 미타키하라에 발푸르기스의 밤과 원환의 이치를 찾는 마법소녀들이 나타나고, 마법소녀들의 운명이 다시 움직이기 시작한다. 신보 아키유키 감독의 극장판.",
+        "폴2: 데드포인트": "해발 3,300m, 수십 년간 출입이 금지된 가장 위험한 산 '콴'. 숨쉬기조차 힘들고 한 번의 실수가 곧 죽음으로 이어지는 그곳에서 벌어지는 극한의 생존 스릴러. 〈폴: 600미터〉 제작진의 후속작.",
+        "그대, 별처럼": "세토 내해의 아름다운 섬. 섬으로 전학 온 카이와 섬에서 자란 아키미는 각자 힘든 가정환경 속에서 서로에게 유일한 버팀목이 되어 사랑에 빠진다. 꿈을 위해 도쿄로 떠난 카이와 가족을 위해 섬에 남은 아키미, 15년에 걸친 두 사람의 사랑과 선택을 그린다.",
+        "포드 V 페라리": "1960년대, 르망 24시 레이스에서 페라리를 꺾으려는 포드는 카레이서 출신 자동차 디자이너 캐롤 셸비에게 도움을 청한다. 셸비는 거침없는 레이서 켄 마일스와 함께 회사의 간섭에 맞서며 전설의 레이싱카를 만들어 내고, 마침내 르망에 도전한다. 실화를 바탕으로 한 영화.",
+        "스크루지: 크리스마스 캐럴": "크리스마스를 성가신 날로만 여기는 괴팍한 구두쇠 스크루지. 크리스마스이브에 죽은 동업자의 유령에게 끔찍한 운명을 경고받은 그는 과거, 현재, 미래의 유령을 차례로 만나며 자신의 삶을 돌아보는 기묘한 여정에 나선다. 조니 뎁이 스크루지를 연기한다.",
+        "마리 앙투아네트": "오스트리아의 공주 마리 앙투아네트는 동맹을 위해 프랑스 황태자 루이 16세와 결혼해 베르사유에 들어선다. 새로운 삶에 설렌 것도 잠시, 무관심한 남편과 귀족들의 시기 속에서 점점 외로워진 그녀의 화려하고도 쓸쓸한 궁정 생활을 그린 소피아 코폴라 감독의 작품.",
+        "여전히 찬란하게": "오랫동안 찾아 헤맨 단짝 정임을 다시 만난 순옥은, 어린 시절 함께 꿈꾸던 노래자랑에 나가려고 서울행을 결심한다. 하지만 정임은 이름과 꿈, 함께한 추억까지 조금씩 잊어 가고 있다. 1942년 시골 마을에서 시작된 두 소녀의 우정과 그 시절의 상처를 따라가는 이야기.",
+        "타짜: 벨제붑의 노래": "학창 시절부터 절친한 장태영과 박태영은 온라인 카지노 사업으로 승승장구하지만, 성공이 커질수록 질투는 배신으로 변한다. 나락에 떨어졌다 살아남은 장태영은 전설의 타짜에게 포커를 배우고, 일본과 베트남의 거물들이 모인 거액의 도박판에서 두 친구는 다시 마주한다.",
+        "알라딘": "아그라바 왕국의 좀도둑 알라딘은 우연히 만난 자스민 공주에게 반한다. 사악한 재상 자파의 계략으로 마법 동굴에 들어간 알라딘은 세 가지 소원을 들어주는 램프의 지니를 만나고, 왕자로 변신해 공주의 마음을 얻으려 하지만 자파의 음모가 왕국을 위협한다.",
+        "호루몽": "2017년 일본 지상파 방송의 가짜 뉴스로 하루아침에 공격의 대상이 된 재일 코리안 3세 신숙옥. 할머니와 어머니로 이어진 100년의 역사를 품고 그녀는 물러서지 않는 싸움을 시작하고, 끝내 배상 판결과 방송 폐지를 이끌어 낸다. 그 싸움의 기록을 담은 다큐멘터리.",
+        "프레셔": "역사상 최대 규모의 상륙작전을 72시간 앞둔 연합군 지휘부. 기상학자 스태그는 D-Day 당일 치명적인 폭풍우를 예보하고, 최고 사령관 아이젠하워는 작전을 강행할지 멈출지 극한의 선택에 내몰린다. 수십만 명의 목숨이 걸린 날씨 예보를 둘러싼 심리 스릴러.",
+        "삼춘, 어디 감수광?": "몸이 불편한 제주어 가수 정원은 관객 없는 제주 오일장 무대에서 묵묵히 버스킹을 이어 간다. 그의 노래를 카메라에 담는 영화감독 윤호, 당찬 무명 배우 미정과 함께 예술을 하는 이유에 대한 답을 찾아 서울로 떠나는 유쾌한 힐링 버스킹 여정.",
+        "보헤미안 랩소디": "공항에서 수하물 노동자로 일하던 파록 버사라는 밴드에 합류해 프레디 머큐리라는 이름으로 무대에 선다. 퀸은 틀을 깨는 음악으로 세계적인 밴드가 되지만 프레디는 점점 고립되고, 마침내 라이브 에이드 무대에서 전설적인 공연을 펼친다. 퀸과 프레디 머큐리의 이야기를 그린 음악 영화.",
+        "라라랜드": "재즈 피아니스트 세바스찬과 배우 지망생 미아는 꿈을 좇는 도시 로스앤젤레스에서 우연히 만나 사랑에 빠진다. 서로의 꿈을 응원하며 계절을 함께 보내지만, 성공에 가까워질수록 두 사람은 사랑과 꿈 사이에서 선택의 갈림길에 선다.",
+        "헝거게임 50번째 추첨의 날": "캐피톨을 조롱해 역대 최하점을 받은 가난한 소년 헤이미치. 모두가 그가 가장 먼저 죽으리라 예상하지만, 48명이 맹독의 숲에 던져진 50번째 헝거게임에서 그는 다른 참가자가 아닌 게임의 시스템 자체를 무너뜨릴 계획을 세운다.",
+        "와일드 호스 나인": "1973년, 수십 년간 함께 비밀 작전을 수행해 온 CIA 베테랑 요원 크리스와 리가 이스터섬으로 향한다. 은퇴를 앞두고 회고록을 준비하는 크리스를 감시하라는 명령을 받은 리. 칠레 대학생들과 얽히며 두 사람의 마지막 임무는 뜻밖의 방향으로 흘러간다. 마틴 맥도나 감독 작품.",
+        "하트 오브 비스트": "비행기 사고로 알래스카 오지에 고립된 전직 특수부대원 제임스. 곁에 남은 것은 함께 은퇴한 군견 오딘뿐이다. 끊임없이 목숨을 위협하는 자연 속에서 서로만을 의지한 채 살아남기 위해 싸우는 생존 드라마.",
+        "암살자(들)": "1974년 8월 15일, 대한민국을 충격에 빠뜨린 영부인 저격 사건. 그날의 의혹과 배후를 끝까지 추적하는 이야기를 허진호 감독이 그린다.",
+        "헥스: 마녀왕국": "마법을 막는 팔찌가 우연히 풀리면서 숨겨진 힘에 눈뜬 소녀 빌리는 마녀들의 세계 헥스로 들어선다. 무엇이든 될 수 있는 헥스에 빠져들던 빌리는 자신을 둘러싼 예언과 엄마의 비밀을 알게 되고, 위기에 빠진 헥스와 엄마를 구하기 위해 나선다.",
+        "너의 췌장을 먹고 싶어": "병원에서 우연히 주운 문고본 『공병문고』. 그것은 반 친구 사쿠라가 췌장 병으로 남은 시간이 얼마 없다는 사실을 적어 둔 일기였다. 비밀을 알게 된 소년과 하루하루를 밝게 살아가는 사쿠라가 함께 보내는 특별한 시간을 그린 애니메이션."
+    };
+
     /* ===== 유틸 ===== */
     const $ = (sel, root = document) => root.querySelector(sel);
     const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
@@ -318,7 +351,9 @@
     /* 포스터 자리표시 — asset/posters/{movieId}.jpg 가 있으면 위에 덮어 보여 준다 */
     function posterHtml(title, path, cls = '', badge = '', badgeClass = '', source = '') {
         const imagePath = path && /^https?:\/\//i.test(path) ? path : path ? ROOT + path : '';
-        const img = imagePath ? `<img src="${esc(imagePath)}" alt="${esc(title)} 포스터" loading="lazy">` : '';
+        const fallbacks = imagePath ? posterFallbacks(imagePath, title) : [];
+        /* referrerpolicy=no-referrer: 영화관 이미지 서버가 다른 사이트(127.0.0.1 등)에서 온 요청을 막지 않도록 출처를 보내지 않는다 */
+        const img = imagePath ? `<img src="${esc(imagePath)}" alt="${esc(title)} 포스터" loading="lazy" decoding="async" referrerpolicy="no-referrer"${fallbacks.length ? ` data-fallback="${esc(fallbacks.join('|'))}"` : ''}>` : '';
         const sourceLabel = source === 'json' ? 'JSON 파일' : CHART_PROVIDERS[source]?.name || 'API';
         const sourceLetter = { json: 'J', cgv: 'C', lotte: 'L', megabox: 'M' }[source] || 'A';
         const sourceMark = source ? `<span class="movie-source movie-source--${source}" title="${sourceLabel}에서 불러옴" aria-label="${sourceLabel}에서 불러옴">${sourceLetter}</span>` : '';
@@ -334,8 +369,33 @@
         const icons = types.map(([, icon]) => `<i class="fa-solid ${icon}" aria-hidden="true"></i>`).join('');
         return `<span class="availability-icons" role="img" aria-label="${label}" title="${label}">${icons}</span>`;
     }
+    /* 포스터가 안 열릴 때 차례로 시도할 다른 주소
+       롯데시네마: 같은 포스터의 다른 크기 파일 → 앱 데이터(TMDB·JSON)에 있는 같은 제목 영화 포스터 */
+    const LOTTE_POSTER_RE = /(lottecinema\.co\.kr\/Media\/MovieFile\/MovieImg\/\d+\/\d+)_(\d{3})_(\d+)\.(jpe?g|png)$/i;
+    function posterFallbacks(src, title) {
+        const list = [];
+        const lotte = String(src).match(LOTTE_POSTER_RE);
+        if (lotte) {
+            ['101', '103', '102', '503', '104'].filter((code) => code !== lotte[2])
+                .forEach((code) => list.push(String(src).replace(LOTTE_POSTER_RE, `$1_${code}_$3.$4`)));
+        }
+        const key = normalizeTitle(title);
+        if (key && (lotte || /megabox|cgv/i.test(String(src)))) {
+            const same = (data.movies || []).find((m) => m.posterPath && normalizeTitle(m.title) === key && !LOTTE_POSTER_RE.test(m.posterPath));
+            if (same) list.push(/^https?:\/\//i.test(same.posterPath) ? same.posterPath : ROOT + same.posterPath);
+        }
+        return list.filter((url, i) => url && url !== src && list.indexOf(url) === i);
+    }
     document.addEventListener('error', (e) => {
-        if (e.target.tagName === 'IMG') e.target.classList.add('is-broken');
+        const img = e.target;
+        if (img.tagName !== 'IMG') return;
+        const rest = (img.dataset.fallback || '').split('|').filter(Boolean);
+        if (rest.length) {
+            img.dataset.fallback = rest.slice(1).join('|');
+            img.src = rest[0];
+            return;
+        }
+        img.classList.add('is-broken');
     }, true);
 
     async function loadJson(path, fallback) {
@@ -351,12 +411,21 @@
     /* ===== 사용자 · 티켓 저장소 ===== */
     const data = {
         movies: [], genres: [], samples: [], cgvMovies: [], lotteMovies: [], megaboxMovies: [], activeChartProvider: 'cgv',
-        tickets: [], user: null
+        tickets: [], favorites: [], user: null
     };
     const movieById = (id) => data.movies.find((m) => m.movieId === id) ||
         data.lotteMovies.find((m) => m.movieId === id) ||
         data.megaboxMovies.find((m) => m.movieId === id);
     const normalizeTitle = (title) => String(title || '').toLocaleLowerCase('ko-KR').replace(/[\s:：·☆★\-<>＜＞〈〉()!！]/g, '');
+    const SYNOPSIS_BY_TITLE = new Map(Object.entries(CHART_SYNOPSES).map(([title, text]) => [normalizeTitle(title), text]));
+    const synopsisFor = (title) => SYNOPSIS_BY_TITLE.get(normalizeTitle(title)) || '';
+    /* 줄거리가 비어 있는 영화를 채운다 (앱 데이터 → 같은 제목의 다른 영화 → 줄거리 모음 순) */
+    function fillMissingOverviews(list) {
+        list.forEach((movie) => {
+            if ((movie.overview || '').trim()) return;
+            movie.overview = synopsisFor(movie.title) || '';
+        });
+    }
     const chartMovies = (provider) => (provider === 'lotte' ? data.lotteMovies : provider === 'megabox' ? data.megaboxMovies : data.cgvMovies) || [];
     const chartMovieHref = (movie, provider) => `${url('movie')}?movieId=${encodeURIComponent(movie.movieId)}&chart=${provider}`;
     const genreName = (id) => (data.genres.find((g) => g.id === id) || {}).name || '';
@@ -396,7 +465,8 @@
         WEAK_PASSWORD: '비밀번호는 영문자와 숫자를 조합해 8자 이상 입력해 주세요.',
         INVALID_NICKNAME: '닉네임은 1~20자로 입력해 주세요.',
         SESSION_EXPIRED: '로그인이 만료되었어요. 다시 로그인해 주세요.',
-        TICKET_NOT_FOUND: '티켓을 찾을 수 없어요.'
+        TICKET_NOT_FOUND: '티켓을 찾을 수 없어요.',
+        INVALID_MOVIE: '영화 정보를 찾을 수 없어요.'
     };
     function toAuthError(error) {
         const msg = String(error?.message || error || '');
@@ -546,6 +616,28 @@
             await rpc('film_delete_ticket', { p_token: sessionToken(), p_ticket_id: ticketId });
         },
 
+        /* 찜한 영화 목록 [{ movieId, movieTitle, posterUrl, chartKey, createdAt }] (최근에 찜한 순) */
+        async loadFavorites(user) {
+            if (!user) return [];
+            if (!isCloud) {
+                return local.get(STORE.favorites, [])
+                    .filter((f) => f.userId === user.userId)
+                    .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+            }
+            return rpc('film_my_favorites', { p_token: sessionToken() });
+        },
+
+        /* 찜하기(on=true) / 해제(on=false) */
+        async setFavorite(movie, on) {
+            if (!isCloud) {
+                const all = local.get(STORE.favorites, []).filter((f) => !(f.userId === data.user.userId && f.movieId === movie.movieId));
+                if (on) all.push({ ...movie, userId: data.user.userId, createdAt: new Date().toISOString() });
+                local.set(STORE.favorites, all);
+                return on ? movie : null;
+            }
+            return rpc('film_set_favorite', { p_token: sessionToken(), p_movie: movie, p_on: on });
+        },
+
         /* 영화 상세의 FILM LOG 관객 리뷰: 공개로 저장된 한줄평 [{ author, oneLineReview, rating, watchedAt, createdAt }] */
         async publicReviews(movieId) {
             if (!isCloud) {
@@ -583,17 +675,67 @@
        - 서버가 꺼져 있으면 앱에 들어 있는 대체 순위를 보여 준다.
        화면에 들어올 때마다(뒤로 가기로 돌아오거나 탭을 다시 볼 때 포함) 새로 요청하고, 홈에서는 1분마다 다시 확인한다. */
     const CGV_CHART_REFRESH_MS = 60 * 1000;
+    /* 실시간 순위는 영화관 사이트와 똑같이 보이도록 받은 순서·목록을 그대로 쓰고,
+       앱에 들어 있는 대체 순위만 개봉한 영화로 거르고 예매율 순으로 정렬한다 */
+    const validReleaseDate = (value) => {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(value || '')) return false;
+        const d = new Date(`${value}T00:00:00`);
+        return !Number.isNaN(d.getTime()) && ymd(d) === value;
+    };
+    const keepChartMovie = (chart, movie) => (chart.isLive === true
+        ? !movie.releaseDate || validReleaseDate(movie.releaseDate)
+        : validReleaseDate(movie.releaseDate) && movie.releaseDate <= ymd(today));
+    const siteRank = (movie) => Number(movie.cgvChartRank || movie.rank) || Infinity;
     const CHART_API_BASE = location.protocol === 'file:' ? 'http://127.0.0.1:8000/' : ROOT;
     const CHART_FETCH_TIMEOUT_MS = 8000;
-    async function fetchChart(name, forceRefresh = false) {
+    const CHART_CACHE_KEY = 'ticketbook.liveCharts.v2';
+    try { localStorage.removeItem('ticketbook.liveCharts'); } catch (e) { /* 이전 버전이 저장한 순위(테스트 데이터 포함)는 버린다 */ }
+    /* 마지막으로 받은 실시간 순위(24시간 이내)를 먼저 보여 주고, 새 순위는 뒤에서 받아 바꾼다 */
+    /* data/live-charts.js 를 다시 읽는다 (화면에 다시 들어오거나 홈에서 1분마다) */
+    function reloadLiveChartsFile() {
+        return new Promise((resolve) => {
+            const script = document.createElement('script');
+            script.src = `${ROOT}data/live-charts.js?t=${Date.now()}`;
+            script.onload = script.onerror = () => {
+                script.remove();
+                const before = JSON.stringify([data.cgvChartUpdatedAt, data.lotteChartUpdatedAt, data.megaboxChartUpdatedAt]);
+                mergeCachedLiveCharts();
+                const after = JSON.stringify([data.cgvChartUpdatedAt, data.lotteChartUpdatedAt, data.megaboxChartUpdatedAt]);
+                if (before !== after) {
+                    if (page === 'home') { renderCinemaChart(); renderCommunityReviews(); }
+                    else if (typeof data.onChartsUpdated === 'function') data.onChartsUpdated();
+                }
+                resolve();
+            };
+            document.head.appendChild(script);
+        });
+    }
+
+    function mergeCachedLiveCharts() {
+        // data/live-charts.js: server.py(자동 갱신 예약 작업 포함)가 저장한 최신 순위. 파일로 열어도 <script>로 읽힌다
+        const fileCharts = (window.MINPLY_LIVE_CHARTS && typeof window.MINPLY_LIVE_CHARTS === 'object') ? window.MINPLY_LIVE_CHARTS : {};
+        const cache = local.get(CHART_CACHE_KEY, {});
+        const time = (chart) => new Date(chart?.updatedAt || 0).getTime() || 0;
+        const usable = (chart) => chart && chart.isLive === true && Array.isArray(chart.movies) && chart.movies.length > 0;
+        const newest = (key) => [fileCharts[key], cache[key]].filter(usable).sort((a, b) => time(b) - time(a))[0];
+        const merges = { cgv: mergeCgvChart, lotte: mergeLotteChart, megabox: mergeMegaboxChart };
+        Object.entries(merges).forEach(([key, merge]) => {
+            const chart = newest(key);
+            if (!chart) return;
+            try { merge(chart); } catch (error) { console.warn(`${key} 저장 순위를 읽지 못했습니다.`, error); }
+        });
+    }
+    async function fetchChart(name) {
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), CHART_FETCH_TIMEOUT_MS);
         try {
-            const refreshParam = forceRefresh ? '&refresh=1' : '';
-            const response = await fetch(`${CHART_API_BASE}api/${name}-chart?t=${Date.now()}${refreshParam}`, { cache: 'no-store', signal: controller.signal });
+            const response = await fetch(`${CHART_API_BASE}api/${name}-chart?t=${Date.now()}`, { cache: 'no-store', signal: controller.signal });
             if (!response.ok) throw new Error(`${name} chart request failed (${response.status})`);
             const chart = await response.json();
             data.chartCheckedAt = new Date();
+            if (chart?.isLive === true && Array.isArray(chart.movies) && chart.movies.length) {
+                local.set(CHART_CACHE_KEY, { ...local.get(CHART_CACHE_KEY, {}), [name]: chart });
+            }
             return chart;
         } finally {
             clearTimeout(timer);
@@ -606,17 +748,12 @@
         data.cgvChartUpdatedAt = chart.updatedAt || null;
         data.cgvChartIsLive = chart.isLive === true;
         const releasedMovies = chart.movies
-            .filter((movie) => {
-                if (!/^\d{4}-\d{2}-\d{2}$/.test(movie.releaseDate || '')) return false;
-                const releaseDate = new Date(`${movie.releaseDate}T00:00:00`);
-                return !Number.isNaN(releaseDate.getTime()) &&
-                    ymd(releaseDate) === movie.releaseDate &&
-                    movie.releaseDate <= ymd(today);
-            })
-            .sort((a, b) =>
-                (Number(b.cgvReservationRate) || 0) - (Number(a.cgvReservationRate) || 0) ||
-                (Number(a.cgvChartRank || a.cgvRank || a.rank) || Infinity) -
-                (Number(b.cgvChartRank || b.cgvRank || b.rank) || Infinity)
+            .filter((movie) => keepChartMovie(chart, movie))
+            .sort((a, b) => chart.isLive === true
+                ? siteRank(a) - siteRank(b)
+                : (Number(b.cgvReservationRate) || 0) - (Number(a.cgvReservationRate) || 0) ||
+                  (Number(a.cgvChartRank || a.cgvRank || a.rank) || Infinity) -
+                  (Number(b.cgvChartRank || b.cgvRank || b.rank) || Infinity)
             );
         data.cgvMovies = releasedMovies.map((chartMovie, index) => {
             const movieId = Number(chartMovie.movieId);
@@ -634,7 +771,7 @@
                 posterPath: chartMovie.posterPath || existing?.posterPath || '',
                 releaseDate: chartMovie.releaseDate || existing?.releaseDate || '',
                 genreIds,
-                overview: chartMovie.overview || existing?.overview || '',
+                overview: chartMovie.overview || existing?.overview || synopsisFor(chartMovie.title || existing?.title),
                 availableOn: ['theater'],
                 source: 'cgv',
                 rank: index + 1,
@@ -660,17 +797,11 @@
         data.lotteChartUpdatedAt = chart.updatedAt || null;
         data.lotteChartIsLive = chart.isLive === true;
         data.lotteMovies = chart.movies
-            .filter((movie) => {
-                if (!/^\d{4}-\d{2}-\d{2}$/.test(movie.releaseDate || '') ||
-                    !/^\d+$/.test(String(movie.movieCode || ''))) return false;
-                const releaseDate = new Date(`${movie.releaseDate}T00:00:00`);
-                return !Number.isNaN(releaseDate.getTime()) &&
-                    ymd(releaseDate) === movie.releaseDate &&
-                    movie.releaseDate <= ymd(today);
-            })
-            .sort((a, b) =>
-                (Number(b.reservationRate) || 0) - (Number(a.reservationRate) || 0) ||
-                (Number(a.rank) || Infinity) - (Number(b.rank) || Infinity)
+            .filter((movie) => /^\d+$/.test(String(movie.movieCode || '')) && keepChartMovie(chart, movie))
+            .sort((a, b) => chart.isLive === true
+                ? siteRank(a) - siteRank(b)
+                : (Number(b.reservationRate) || 0) - (Number(a.reservationRate) || 0) ||
+                  (Number(a.rank) || Infinity) - (Number(b.rank) || Infinity)
             )
             .map((movie, index) => ({ ...movie, posterPath: sharpLottePoster(movie.posterPath), rank: index + 1, source: 'lotte' }));
         linkChartMoviesToDetail(data.lotteMovies, 'lotte');
@@ -682,17 +813,11 @@
         data.megaboxChartUpdatedAt = chart.updatedAt || null;
         data.megaboxChartIsLive = chart.isLive === true;
         data.megaboxMovies = chart.movies
-            .filter((movie) => {
-                if (!/^\d{4}-\d{2}-\d{2}$/.test(movie.releaseDate || '') ||
-                    !/^\d+$/.test(String(movie.movieCode || ''))) return false;
-                const releaseDate = new Date(`${movie.releaseDate}T00:00:00`);
-                return !Number.isNaN(releaseDate.getTime()) &&
-                    ymd(releaseDate) === movie.releaseDate &&
-                    movie.releaseDate <= ymd(today);
-            })
-            .sort((a, b) =>
-                (Number(b.reservationRate) || 0) - (Number(a.reservationRate) || 0) ||
-                (Number(a.rank) || Infinity) - (Number(b.rank) || Infinity)
+            .filter((movie) => /^\d+$/.test(String(movie.movieCode || '')) && keepChartMovie(chart, movie))
+            .sort((a, b) => chart.isLive === true
+                ? siteRank(a) - siteRank(b)
+                : (Number(b.reservationRate) || 0) - (Number(a.reservationRate) || 0) ||
+                  (Number(a.rank) || Infinity) - (Number(b.rank) || Infinity)
             )
             .map((movie, index) => ({ ...movie, rank: index + 1, source: 'megabox' }));
         linkChartMoviesToDetail(data.megaboxMovies, 'megabox');
@@ -710,7 +835,7 @@
             }
             movie.movieId = existing ? existing.movieId : CHART_ID_BASE[provider] + Number(movie.movieCode);
             movie.genreIds = existing?.genreIds || movie.genreIds || [];
-            movie.overview = movie.overview || existing?.overview || '';
+            movie.overview = movie.overview || existing?.overview || synopsisFor(movie.title);
             movie.availableOn = ['theater'];
         });
     }
@@ -760,27 +885,7 @@
         updateCgvArrows(cgvCarousel);
     }
 
-    /* 무비차트 제목 옆: 실시간으로 받아 온 순위인지, 앱에 들어 있는 대체 순위인지 표시 */
-    function renderChartStatus() {
-        const el = $('#chartStatus');
-        if (!el) return;
-        const key = data.activeChartProvider;
-        const isLive = data[`${key}ChartIsLive`] === true;
-        const updatedAt = data[`${key}ChartUpdatedAt`] ? new Date(data[`${key}ChartUpdatedAt`]) : null;
-        el.classList.toggle('is-live', isLive);
-        // 실시간으로 받아 온 순위일 때만 표시 (대체 순위일 때는 아무것도 표시하지 않음)
-        el.textContent = isLive && updatedAt && !Number.isNaN(updatedAt.getTime())
-            ? `실시간 · ${pad(updatedAt.getHours())}:${pad(updatedAt.getMinutes())}`
-            : '';
-        el.hidden = !el.textContent;
-        const link = $('#chartSiteLink');
-        if (link) {
-            link.href = CHART_PROVIDERS[key].site;
-            link.innerHTML = `${CHART_PROVIDERS[key].name}에서 지금 순위 보기 <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>`;
-            link.setAttribute('aria-label', `${CHART_PROVIDERS[key].name} 공식 사이트에서 지금 순위 보기 (새 창)`);
-        }
-        if (!isLive) console.info('영화관 실시간 순위를 받지 못해 앱에 들어 있는 대체 순위를 표시합니다. js/server.py 를 실행하면 실시간 순위로 바뀝니다.');
-    }
+    function renderChartStatus() { /* 표시할 상태 없음 */ }
 
     /* 포스터 하단 페이지 표시 점 — 현재 영화는 길쭉한 보라색 막대로 표시 */
     function renderChartDots(count, activeIndex) {
@@ -817,9 +922,9 @@
         });
     }
 
-    async function refreshLiveCgvChart(forceRefresh = false) {
+    async function refreshLiveCgvChart() {
         try {
-            mergeCgvChart(await fetchChart('cgv', forceRefresh));
+            mergeCgvChart(await fetchChart('cgv'));
             if (data.activeChartProvider === 'cgv') {
                 renderCinemaChart();
             }
@@ -829,9 +934,9 @@
         }
     }
 
-    async function refreshLiveMegaboxChart(forceRefresh = false) {
+    async function refreshLiveMegaboxChart() {
         try {
-            mergeMegaboxChart(await fetchChart('megabox', forceRefresh));
+            mergeMegaboxChart(await fetchChart('megabox'));
             if (data.activeChartProvider === 'megabox') {
                 renderCinemaChart();
             }
@@ -840,9 +945,9 @@
         }
     }
 
-    async function refreshLiveLotteChart(forceRefresh = false) {
+    async function refreshLiveLotteChart() {
         try {
-            mergeLotteChart(await fetchChart('lotte', forceRefresh));
+            mergeLotteChart(await fetchChart('lotte'));
             if (data.activeChartProvider === 'lotte') {
                 renderCinemaChart();
             }
@@ -850,6 +955,61 @@
             console.warn('롯데시네마 무비차트 실시간 갱신에 실패했습니다.', error);
         }
     }
+
+    /* ===== 찜(즐겨찾기) =====
+       하트 버튼은 어느 화면에서든 data-fav 속성만 있으면 동작한다 (아래 클릭 위임) */
+    const HEART_SVG = '<svg class="heart-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 20.6l-1.3-1.2C5.6 14.8 2.5 12 2.5 8.4 2.5 5.6 4.7 3.4 7.5 3.4c1.6 0 3.2.8 4.5 2.1 1.3-1.3 2.9-2.1 4.5-2.1 2.8 0 5 2.2 5 5 0 3.6-3.1 6.4-8.2 11l-1.3 1.2z"/></svg>';
+    const isFavorite = (movieId) => data.favorites.some((f) => Number(f.movieId) === Number(movieId));
+    function heartButton(movie, chartKey = '', extraClass = '') {
+        const on = isFavorite(movie.movieId);
+        return `<button type="button" class="heart-btn ${extraClass}" data-fav="${esc(String(movie.movieId))}"
+            data-fav-title="${esc(movie.title || movie.movieTitle || '')}" data-fav-poster="${esc(movie.posterPath || movie.posterUrl || '')}"
+            data-fav-chart="${esc(chartKey)}" aria-pressed="${on}" aria-label="${esc(movie.title || movie.movieTitle || '영화')} ${on ? '찜 해제' : '찜하기'}">
+            ${HEART_SVG}</button>`;
+    }
+    function syncHeartButtons(movieId) {
+        const on = isFavorite(movieId);
+        $$(`[data-fav="${movieId}"]`).forEach((btn) => {
+            btn.setAttribute('aria-pressed', String(on));
+            btn.setAttribute('aria-label', `${btn.dataset.favTitle || '영화'} ${on ? '찜 해제' : '찜하기'}`);
+            btn.classList.toggle('is-on', on);
+        });
+    }
+    const favoriteBusy = new Set();
+    async function toggleFavorite(btn) {
+        const movieId = Number(btn.dataset.fav);
+        if (!movieId || favoriteBusy.has(movieId)) return;
+        if (!data.user) { needLogin('favorite'); return; }
+        const movie = { movieId, movieTitle: btn.dataset.favTitle || '', posterUrl: btn.dataset.favPoster || '', chartKey: btn.dataset.favChart || '' };
+        const on = !isFavorite(movieId);
+        const previous = data.favorites;
+        // 먼저 화면에 반영하고 저장한다 (실패하면 되돌림)
+        data.favorites = on ? [{ ...movie, createdAt: new Date().toISOString() }, ...previous] : previous.filter((f) => Number(f.movieId) !== movieId);
+        syncHeartButtons(movieId);
+        btn.classList.add('is-pop');
+        setTimeout(() => btn.classList.remove('is-pop'), 300);
+        favoriteBusy.add(movieId);
+        try {
+            await backend.setFavorite(movie, on);
+            toast(on ? '찜한 영화에 담았어요' : '찜을 해제했어요');
+            if (typeof data.onFavoritesChanged === 'function') data.onFavoritesChanged();
+        } catch (error) {
+            data.favorites = previous;
+            syncHeartButtons(movieId);
+            toast(error instanceof AuthError ? error.message : '찜하지 못했어요. 잠시 후 다시 시도해 주세요.');
+        } finally {
+            favoriteBusy.delete(movieId);
+        }
+    }
+    document.addEventListener('click', (event) => {
+        const btn = event.target.closest('[data-fav]');
+        if (!btn) return;
+        event.preventDefault();
+        event.stopPropagation();
+        void toggleFavorite(btn);
+    });
+    /* 찜한 영화 → 영화 상세 주소 (롯데시네마·메가박스 전용 영화는 차트 정보와 함께) */
+    const favoriteHref = (f) => `${url('movie')}?movieId=${encodeURIComponent(f.movieId)}${f.chartKey && f.chartKey !== 'cgv' ? `&chart=${f.chartKey}` : ''}`;
 
     /* 로그인이 필요한 화면에서: 돌아올 주소를 기억해 두고 로그인 화면으로 보낸다 */
     function needLogin(reason, { replace = false } = {}) {
@@ -1123,7 +1283,7 @@
             };
             animationFrame = requestAnimationFrame(animate);
         };
-        const moveChart = (direction, duration = 650, onComplete) => {
+        const moveChart = (direction, duration = 500, onComplete) => {
             const cards = $$('.cgv-chart-card', cgvCarousel);
             const currentCard = getCenteredCard();
             const nextCard = cards[cards.indexOf(currentCard) + direction];
@@ -1138,7 +1298,7 @@
             clearAutoTimer();
             const movies = chartMovies(data.activeChartProvider);
             if (reducedMotion || pointerInside || hasFocus || brieflyPaused || document.hidden || movies.length < 2) return;
-            autoTimer = setTimeout(() => moveChart(1, 800, scheduleAutoAdvance), 2600);
+            autoTimer = setTimeout(() => moveChart(1, 550, scheduleAutoAdvance), 1700);
         };
         let pauseAutoAdvance = (resumeAfter = 0) => {
             clearAutoTimer();
@@ -1313,13 +1473,16 @@
                     : `${url('movie')}?movieId=${encodeURIComponent(m.movieId)}`;
                 const badge = index + 1;
                 return `
+                <div class="card-wrap">
                 <a class="card" href="${href}">
                     ${posterHtml(m.title, m.posterPath, '', String(badge).padStart(2, '0'), 'badge--rank', m.source)}
                     <p class="card__t">${esc(m.title)}</p>
                     <p class="card__m">${isTheaterList && m.providers
                         ? `${m.providers.map((provider) => ({ cgv: 'CGV', lotte: '롯데', megabox: '메가' })[provider]).join('·')} · 예매율 ${m.theaterReservationRate.toFixed(1)}%`
                         : `${m.releaseDate?.slice(0, 4) || (m.source === 'cgv' ? 'CGV 상영 중' : '')}${m.genreIds[0] ? ' · ' + esc(genreName(m.genreIds[0])) : ''}${m.voteAverage ? ` · ★ ${m.voteAverage.toFixed(1)}` : ''}`}</p>
-                </a>`;
+                </a>
+                <div class="card-wrap__poster">${heartButton(m, m.chartProvider && m.chartProvider !== 'cgv' ? m.chartProvider : '', 'heart-btn--card')}</div>
+                </div>`;
             }).join('');
             if (empty) {
                 const conds = [];
@@ -1649,7 +1812,38 @@
         }
     }
 
+    /* 마이 티켓북 > 찜한 영화 (ticketbook.html?view=likes) */
+    function initLikes() {
+        $$('.seg a').forEach((a) => {
+            const on = a.dataset.seg === 'likes';
+            a.classList.toggle('is-on', on);
+            if (on) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+        });
+        $('#myEmpty').hidden = true;
+        $('#gridView').hidden = true;
+        $('#myTagChips').hidden = true;
+        $('#likeView').hidden = false;
+        const render = () => {
+            const list = data.favorites;
+            $('#likeEmpty').hidden = list.length > 0;
+            $('#likeCount').hidden = list.length === 0;
+            $('#likeCount').textContent = `총 ${list.length}편`;
+            $('#likeGrid').innerHTML = list.map((f) => `
+                <div class="card-wrap">
+                    <a class="card" href="${favoriteHref(f)}">
+                        ${posterHtml(f.movieTitle, f.posterUrl)}
+                        <p class="card__t">${esc(f.movieTitle)}</p>
+                        <p class="card__m">${dotDate(String(f.createdAt).slice(0, 10))}</p>
+                    </a>
+                    <div class="card-wrap__poster">${heartButton({ movieId: f.movieId, title: f.movieTitle, posterPath: f.posterUrl }, f.chartKey, 'heart-btn--card')}</div>
+                </div>`).join('');
+        };
+        data.onFavoritesChanged = render;
+        render();
+    }
+
     function initTicketbook() {
+        if (params.get('view') === 'likes') { initLikes(); return; }
         const all = myTickets();
         $('#myEmpty').hidden = all.length > 0;
         $('#gridView').hidden = all.length === 0;
@@ -1782,7 +1976,12 @@
         });
     }
 
+    /* 느린 요청은 정해진 시간까지만 기다리고 기본값으로 화면을 그린다 */
+    const withTimeout = (promise, ms, fallback) => Promise.race([promise, new Promise((resolve) => setTimeout(() => resolve(fallback), ms))]);
+
     async function initMovieDetail() {
+        // 실시간 순위가 새로 오면 순위·예매율을 다시 그린다
+        data.onChartsUpdated = () => { void initMovieDetail(); };
         const movieId = Number(params.get('movieId'));
         const chartKey = ['cgv', 'lotte', 'megabox'].includes(params.get('chart')) ? params.get('chart') : '';
         const chartEntry = chartKey && chartKey !== 'cgv' ? chartMovies(chartKey).find((m) => m.movieId === movieId) : null;
@@ -1802,8 +2001,40 @@
             genres.join(' · '),
             movie.runtime ? `${movie.runtime}분` : ''
         ].filter(Boolean).join(' · ');
-        const reviewData = ['cgv', 'lotte', 'megabox'].includes(movie.source) ? { reviews: [] } : await loadJson(`api/movie/${movieId}/reviews`, { reviews: [] });
-        const audienceReviews = (await backend.publicReviews(movieId))
+        $('#movieDetail').innerHTML = `
+            <section class="movie-detail">
+                <div class="movie-detail__head">
+                    ${posterHtml(movie.title, movie.posterPath || chartEntry?.posterPath, 'poster--movie', '', '', chartEntry ? chartKey : movie.source)}
+                    <div class="movie-detail__intro">
+                        ${chartEntry ? `<p class="movie-detail__rank">${CHART_PROVIDERS[chartKey].name} 예매율 순위 ${chartEntry.rank}위</p>` : movie.cgvRank ? `<p class="movie-detail__rank">예매율 순위 ${movie.cgvRank}위</p>` : movie.rank ? `<p class="movie-detail__rank">인기 순위 ${movie.rank}위</p>` : ''}
+                        <div class="movie-detail__titlerow">
+                            <h2 class="movie-detail__title">${esc(movie.title)}</h2>
+                            ${heartButton({ movieId: movie.movieId, title: movie.title, posterPath: movie.posterPath || chartEntry?.posterPath }, chartEntry ? chartKey : '', 'heart-btn--detail')}
+                        </div>
+                        ${movie.originalTitle && movie.originalTitle !== movie.title ? `<p class="movie-detail__original">${esc(movie.originalTitle)}</p>` : ''}
+                        ${movieMeta ? `<p class="movie-detail__meta">${esc(movieMeta)}</p>` : ''}
+                        ${chartEntry
+                            ? `<p class="movie-detail__rating">예매율 ${Number(chartEntry.reservationRate).toFixed(1)}%</p>`
+                            : movie.source === 'cgv'
+                            ? `<p class="movie-detail__rating">예매율 ${Number(movie.cgvReservationRate).toFixed(1)}%</p>`
+                            : `<p class="movie-detail__rating"><i class="fa-solid fa-star" aria-hidden="true"></i> ${(Number(movie.voteAverage) / 2).toFixed(1)} / 5.0${Number(movie.voteCount) > 0 ? ` <span>(${Number(movie.voteCount).toLocaleString()}명)</span>` : ''}</p>`}
+                    </div>
+                </div>
+                ${movie.ottProvider && !chartEntry ? `<p class="movie-detail__source">${esc(movie.ottProvider)}에서만 볼 수 있는 OTT 영화 · ${dotDate(movie.releaseDate)} 공개</p>` : ''}
+                <section class="movie-detail__section">
+                    <h3>줄거리</h3>
+                    <p>${esc(movie.overview || chartEntry?.overview || synopsisFor(movie.title) || '등록된 줄거리가 없습니다.')}</p>
+                </section>
+                <section class="movie-detail__section">
+                    <h3 id="movieReviewTitle">관객 리뷰</h3>
+                    <div id="movieReviewList"><p class="empty-note">리뷰를 불러오는 중…</p></div>
+                    <button type="button" class="btn movie-review__more" id="movieReviewMore" hidden>더보기</button>
+                </section>
+                <a class="btn btn--dark btn--full" href="${url('write')}?movieId=${movie.movieId}">관람 기록 작성</a>
+            </section>`;
+        // 리뷰는 화면을 먼저 보여 준 뒤 불러와 채운다
+        const reviewData = ['cgv', 'lotte', 'megabox'].includes(movie.source) ? { reviews: [] } : await withTimeout(loadJson(`api/movie/${movieId}/reviews`, { reviews: [] }), 2500, { reviews: [] });
+        const audienceReviews = (await withTimeout(backend.publicReviews(movieId), 2500, []))
             .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)))
             .map((ticket) => {
                 return {
@@ -1839,34 +2070,10 @@
                 ${review.createdAt ? `<time datetime="${esc(review.createdAt)}">${esc(review.createdAt)}</time>` : ''}
             </article>`).join('');
         let visibleReviewCount = Math.min(3, displayedReviews.length);
-        $('#movieDetail').innerHTML = `
-            <section class="movie-detail">
-                <div class="movie-detail__head">
-                    ${posterHtml(movie.title, movie.posterPath || chartEntry?.posterPath, 'poster--movie', '', '', chartEntry ? chartKey : movie.source)}
-                    <div class="movie-detail__intro">
-                        ${chartEntry ? `<p class="movie-detail__rank">${CHART_PROVIDERS[chartKey].name} 예매율 순위 ${chartEntry.rank}위</p>` : movie.cgvRank ? `<p class="movie-detail__rank">예매율 순위 ${movie.cgvRank}위</p>` : movie.rank ? `<p class="movie-detail__rank">인기 순위 ${movie.rank}위</p>` : ''}
-                        <h2 class="movie-detail__title">${esc(movie.title)}</h2>
-                        ${movie.originalTitle && movie.originalTitle !== movie.title ? `<p class="movie-detail__original">${esc(movie.originalTitle)}</p>` : ''}
-                        ${movieMeta ? `<p class="movie-detail__meta">${esc(movieMeta)}</p>` : ''}
-                        ${chartEntry
-                            ? `<p class="movie-detail__rating">예매율 ${Number(chartEntry.reservationRate).toFixed(1)}%</p>`
-                            : movie.source === 'cgv'
-                            ? `<p class="movie-detail__rating">예매율 ${Number(movie.cgvReservationRate).toFixed(1)}%</p>`
-                            : `<p class="movie-detail__rating"><i class="fa-solid fa-star" aria-hidden="true"></i> ${(Number(movie.voteAverage) / 2).toFixed(1)} / 5.0${Number(movie.voteCount) > 0 ? ` <span>(${Number(movie.voteCount).toLocaleString()}명)</span>` : ''}</p>`}
-                    </div>
-                </div>
-                ${movie.ottProvider && !chartEntry ? `<p class="movie-detail__source">${esc(movie.ottProvider)}에서만 볼 수 있는 OTT 영화 · ${dotDate(movie.releaseDate)} 공개</p>` : ''}
-                <section class="movie-detail__section">
-                    <h3>줄거리</h3>
-                    <p>${esc(movie.overview || '등록된 줄거리가 없습니다.')}</p>
-                </section>
-                <section class="movie-detail__section">
-                    <h3>${isDemoReviews ? '추천 리뷰' : '관객 리뷰'}</h3>
-                    <div id="movieReviewList">${renderReviewCards(visibleReviewCount)}</div>
-                    <button type="button" class="btn movie-review__more" id="movieReviewMore" ${displayedReviews.length <= visibleReviewCount ? 'hidden' : ''}>더보기</button>
-                </section>
-                <a class="btn btn--dark btn--full" href="${url('write')}?movieId=${movie.movieId}">관람 기록 작성</a>
-            </section>`;
+        if (!$('#movieReviewList')) return;
+        $('#movieReviewTitle').textContent = isDemoReviews ? '추천 리뷰' : '관객 리뷰';
+        $('#movieReviewList').innerHTML = renderReviewCards(visibleReviewCount);
+        $('#movieReviewMore').hidden = displayedReviews.length <= visibleReviewCount;
         $('#movieReviewMore').addEventListener('click', () => {
             visibleReviewCount = Math.min(visibleReviewCount + 3, displayedReviews.length);
             $('#movieReviewList').innerHTML = renderReviewCards(visibleReviewCount);
@@ -1899,6 +2106,8 @@
         mergeCgvChart(cgvData);
         mergeLotteChart(FALLBACK_LOTTE_CHART);
         mergeMegaboxChart(FALLBACK_MEGABOX_CHART);
+        mergeCachedLiveCharts();
+        fillMissingOverviews(data.movies);
         data.samples = sampleData.samples;
         data.apiNextPage = apiData.nextPage;
         data.apiNextOffset = apiData.nextOffset;
@@ -1906,50 +2115,61 @@
         data.apiHasMore = apiData.hasMore;
         initTopButton();
 
-        // 로그인 상태와 내 티켓 불러오기 (클라우드 모드는 Supabase 세션, 기기 저장 모드는 localStorage)
+        // 로그인 상태와 내 티켓 불러오기 (클라우드 모드는 DB, 기기 저장 모드는 localStorage)
+        // 홈·검색·영화 상세는 기다리지 않고 바로 화면을 그린다
         if (!isCloud) await migrateLocalPasswords();
-        try {
-            data.user = await backend.currentUser();
-            data.tickets = await backend.loadMyTickets(data.user);
-        } catch (error) {
-            console.warn('로그인 정보 또는 티켓을 불러오지 못했습니다.', error);
-            if (data.user && ['ticketbook', 'calendar', 'detail', 'write'].includes(page)) {
-                toast(error instanceof AuthError ? error.message : '티켓을 불러오지 못했어요');
+        const sessionReady = (async () => {
+            try {
+                data.user = await backend.currentUser();
+                [data.tickets, data.favorites] = await Promise.all([
+                    backend.loadMyTickets(data.user),
+                    backend.loadFavorites(data.user).catch((error) => { console.warn('찜한 영화를 불러오지 못했습니다.', error); return []; })
+                ]);
+            } catch (error) {
+                console.warn('로그인 정보 또는 티켓을 불러오지 못했습니다.', error);
+                if (data.user && ['ticketbook', 'calendar', 'detail', 'write'].includes(page)) {
+                    toast(error instanceof AuthError ? error.message : '티켓을 불러오지 못했어요');
+                }
             }
-        }
+        })();
+        if (!['home', 'search', 'movie'].includes(page)) await sessionReady;
 
         // 로그인이 필요한 화면 (홈 · 검색 · 로그인 · 작성은 비로그인 허용)
         if (['ticketbook', 'calendar', 'detail'].includes(page) && needLogin('myTickets', { replace: true })) return;
 
-        initAvatar();
+        if (['home', 'search', 'movie'].includes(page)) {
+            // 로그인 정보가 오면 하트 상태를 맞춘다
+            void sessionReady.then(() => { initAvatar(); data.favorites.forEach((f) => syncHeartButtons(f.movieId)); });
+        } else initAvatar();
         const routes = { home: initHome, search: initSearch, movie: initMovieDetail, write: initWrite, login: initLogin, ticketbook: initTicketbook, calendar: initCalendar, detail: initDetail };
-        const chartRefreshesFor = (forceRefresh = false) => {
-            if (page === 'home' || page === 'search') return [
-                refreshLiveCgvChart(forceRefresh),
-                refreshLiveLotteChart(forceRefresh),
-                refreshLiveMegaboxChart(forceRefresh)
-            ];
+        const chartRefreshesFor = () => {
+            if (page === 'home' || page === 'search') return [refreshLiveCgvChart(), refreshLiveLotteChart(), refreshLiveMegaboxChart()];
+            return chartApiRefreshesFor();
+        };
+        const chartApiRefreshesFor = () => {
             if (page === 'movie' || page === 'write') {
-                const list = [refreshLiveCgvChart(forceRefresh)];
-                if (params.get('chart') === 'lotte') list.push(refreshLiveLotteChart(forceRefresh));
-                if (params.get('chart') === 'megabox') list.push(refreshLiveMegaboxChart(forceRefresh));
+                const list = [refreshLiveCgvChart()];
+                if (params.get('chart') === 'lotte') list.push(refreshLiveLotteChart());
+                if (params.get('chart') === 'megabox') list.push(refreshLiveMegaboxChart());
                 return list;
             }
             return [];
         };
-        // 검색·영화 상세는 최신 순위를 받은 뒤 화면을 그린다 (서버가 없으면 바로 대체 순위로)
-        if (['search', 'movie', 'write'].includes(page)) await Promise.all(chartRefreshesFor(true));
+        // 저장해 둔 순위로 화면을 바로 그리고, 새 순위가 오면 바꾼다 (빈 화면을 보여 주지 않음)
         (routes[page] || (() => {}))();
+        const before = JSON.stringify([data.cgvChartUpdatedAt, data.lotteChartUpdatedAt, data.megaboxChartUpdatedAt]);
+        void Promise.all(chartRefreshesFor()).then(() => {
+            const after = JSON.stringify([data.cgvChartUpdatedAt, data.lotteChartUpdatedAt, data.megaboxChartUpdatedAt]);
+            if (page !== 'home' && before !== after && typeof data.onChartsUpdated === 'function') data.onChartsUpdated();
+        });
         if (page === 'home') {
-            // 홈은 대체 순위로 먼저 그리고, 실시간 순위가 오면 바로 바꾼다
-            void Promise.all(chartRefreshesFor(true));
-            setInterval(() => { if (!document.hidden) void Promise.all(chartRefreshesFor()); }, CGV_CHART_REFRESH_MS);
+            setInterval(() => { if (!document.hidden) void Promise.all([reloadLiveChartsFile(), ...chartRefreshesFor()]); }, CGV_CHART_REFRESH_MS);
         }
         // 화면에 다시 들어올 때(뒤로 가기·탭 전환)마다 순위를 새로 받아 온다
         const refreshOnReturn = async () => {
             if (!['home', 'search', 'movie'].includes(page)) return;
             const before = JSON.stringify([data.cgvChartUpdatedAt, data.lotteChartUpdatedAt, data.megaboxChartUpdatedAt]);
-            await Promise.all(chartRefreshesFor(true));
+            await Promise.all([reloadLiveChartsFile(), ...chartRefreshesFor()]);
             const after = JSON.stringify([data.cgvChartUpdatedAt, data.lotteChartUpdatedAt, data.megaboxChartUpdatedAt]);
             if (before !== after && typeof data.onChartsUpdated === 'function') data.onChartsUpdated();
         };

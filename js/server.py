@@ -219,22 +219,13 @@ def normalize_cgv_chart(payload):
             "cgvEggIndex": egg_index if egg_index > 0 else None,
             "cgvAdmissions": format_cgv_admissions(item.get("accAdncCnt")),
         })
-    today = date.today()
-    released_movies = []
-    for movie in movies:
-        try:
-            release_date = date.fromisoformat(movie["releaseDate"])
-        except ValueError:
-            continue
-        if release_date <= today:
-            released_movies.append(movie)
-    movies = released_movies
-    movies.sort(key=lambda movie: (-movie["cgvReservationRate"], movie["cgvChartRank"]))
+    # CGV 사이트 '무비차트' 탭과 같은 순서(현재 예매 순위)를 그대로 쓴다
+    movies.sort(key=lambda movie: movie["cgvChartRank"])
     for rank, movie in enumerate(movies, start=1):
         movie["rank"] = rank
         movie["cgvRank"] = rank
     if not movies:
-        raise ValueError("CGV movie chart contains no released movies")
+        raise ValueError("CGV movie chart contains no movies")
 
     return {
         "asOf": date.today().isoformat(),
@@ -244,10 +235,70 @@ def normalize_cgv_chart(payload):
     }
 
 
-def get_live_cgv_chart(force_refresh=False):
+OVERVIEW_CACHE = {}
+OVERVIEW_CACHE_LOCK = threading.Lock()
+
+
+def lookup_overview(title, lotte_code=""):
+    """영화관 순위에 줄거리가 없을 때 찾아 채운다: 롯데시네마 영화 상세 → TMDB(키가 있을 때) 순. 결과는 기억해 둔다."""
+    key = (title or "").strip()
+    if not key:
+        return ""
+    with OVERVIEW_CACHE_LOCK:
+        if key in OVERVIEW_CACHE:
+            return OVERVIEW_CACHE[key]
+    overview = ""
+    if lotte_code:
+        try:
+            params = {"MethodName": "GetMovieDetailTOBE", "channelType": "HO", "osType": "Chrome", "osVersion": "Chrome",
+                      "multiLanguageID": "KR", "representationMovieCode": str(lotte_code), "memberOnNo": ""}
+            boundary = "----MinplyLotteDetailBoundary"
+            body = (f"--{boundary}\r\nContent-Disposition: form-data; name=\"paramList\"\r\n\r\n"
+                    f"{json.dumps(params, ensure_ascii=False)}\r\n--{boundary}--\r\n").encode("utf-8")
+            request = Request(LOTTE_CHART_URL, data=body, headers={
+                "Content-Type": f"multipart/form-data; boundary={boundary}",
+                "Origin": "https://www.lottecinema.co.kr",
+                "Referer": f"https://www.lottecinema.co.kr/NLCHS/Movie/MovieDetailView?movie={lotte_code}",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
+            })
+            with urlopen(request, timeout=8) as response:
+                detail = json.load(response)
+            movie = detail.get("Movie") or {}
+            overview = str(movie.get("SynopsisKR") or movie.get("Synopsis") or "").strip()
+        except Exception:
+            overview = ""
+    if not overview and TMDB_API_KEY:
+        try:
+            query = urlencode({"api_key": TMDB_API_KEY, "language": "ko-KR", "query": key})
+            with urlopen(f"https://api.themoviedb.org/3/search/movie?{query}", timeout=8) as response:
+                results = json.load(response).get("results") or []
+            overview = next((str(r.get("overview") or "").strip() for r in results if str(r.get("overview") or "").strip()), "")
+        except Exception:
+            overview = ""
+    overview = " ".join(overview.replace("<br>", " ").split())[:600]
+    with OVERVIEW_CACHE_LOCK:
+        OVERVIEW_CACHE[key] = overview
+    return overview
+
+
+def fill_chart_overviews(chart, provider):
+    targets = [m for m in chart.get("movies", [])[:30] if not (m.get("overview") or "").strip()]
+    if not targets:
+        return chart
+    def fill(movie):
+        try:
+            movie["overview"] = lookup_overview(movie.get("title"), movie.get("movieCode") if provider == "lotte" else "")
+        except Exception:
+            movie["overview"] = ""
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        list(pool.map(fill, targets))
+    return chart
+
+
+def get_live_cgv_chart():
     global CGV_CHART_CACHE, CGV_CHART_CACHE_UNTIL
     with CGV_CHART_CACHE_LOCK:
-        if not force_refresh and CGV_CHART_CACHE is not None and time.monotonic() < CGV_CHART_CACHE_UNTIL:
+        if CGV_CHART_CACHE is not None and time.monotonic() < CGV_CHART_CACHE_UNTIL:
             return CGV_CHART_CACHE
 
         query = urlencode({"coCd": "A420", "unitCpotRelNo": 1})
@@ -262,7 +313,7 @@ def get_live_cgv_chart(force_refresh=False):
             },
         )
         with urlopen(request, timeout=15) as response:
-            chart = normalize_cgv_chart(json.load(response))
+            chart = fill_chart_overviews(normalize_cgv_chart(json.load(response)), "cgv")
         CGV_CHART_CACHE = chart
         CGV_CHART_CACHE_UNTIL = time.monotonic() + CGV_CHART_REFRESH_SECONDS
         return chart
@@ -285,11 +336,9 @@ def normalize_lotte_chart(payload):
         if not movie_code.isdigit() or item.get("MoviePlayYN") != "Y":
             continue
         try:
-            parsed_release_date = date.fromisoformat(release_date)
+            date.fromisoformat(release_date)
         except ValueError:
-            continue
-        if parsed_release_date > date.today():
-            continue
+            release_date = ""
 
         try:
             reservation_rate = float(item.get("BookingRate") or 0)
@@ -308,11 +357,11 @@ def normalize_lotte_chart(payload):
             "source": "lotte",
         })
 
-    movies.sort(key=lambda movie: -movie["reservationRate"])
+    # 롯데시네마 '현재 상영작 · 예매순'(orderType 1)과 같은 순서를 그대로 쓴다
     for rank, movie in enumerate(movies, start=1):
         movie["rank"] = rank
     if not movies:
-        raise ValueError("Lotte Cinema chart contains no released movies")
+        raise ValueError("Lotte Cinema chart contains no movies")
 
     return {
         "asOf": date.today().isoformat(),
@@ -322,10 +371,10 @@ def normalize_lotte_chart(payload):
     }
 
 
-def get_live_lotte_chart(force_refresh=False):
+def get_live_lotte_chart():
     global LOTTE_CHART_CACHE, LOTTE_CHART_CACHE_UNTIL
     with LOTTE_CHART_CACHE_LOCK:
-        if not force_refresh and LOTTE_CHART_CACHE is not None and time.monotonic() < LOTTE_CHART_CACHE_UNTIL:
+        if LOTTE_CHART_CACHE is not None and time.monotonic() < LOTTE_CHART_CACHE_UNTIL:
             return LOTTE_CHART_CACHE
 
         params = {
@@ -362,7 +411,7 @@ def get_live_lotte_chart(force_refresh=False):
             },
         )
         with urlopen(request, timeout=15) as response:
-            chart = normalize_lotte_chart(json.load(response))
+            chart = fill_chart_overviews(normalize_lotte_chart(json.load(response)), "lotte")
         LOTTE_CHART_CACHE = chart
         LOTTE_CHART_CACHE_UNTIL = time.monotonic() + LOTTE_CHART_REFRESH_SECONDS
         return chart
@@ -389,8 +438,10 @@ def normalize_megabox_chart(payload):
         if not movie_code.isdigit() or movie_code in seen_codes:
             continue
         release_date = parse_megabox_date(item.get("rfilmDe") or item.get("releaseDe"))
-        if release_date is None or release_date > date.today():
-            continue
+        try:
+            site_rank = int(item.get("boxoRank") or item.get("rank") or 0)
+        except (TypeError, ValueError):
+            site_rank = 0
         try:
             reservation_rate = float(item.get("boxoBokdRt") or item.get("bokdRt") or 0)
         except (TypeError, ValueError):
@@ -405,17 +456,19 @@ def normalize_megabox_chart(payload):
             "movieCode": movie_code,
             "title": str(item.get("movieNm") or "제목 미상").strip(),
             "posterPath": poster_url,
-            "releaseDate": release_date.isoformat(),
+            "releaseDate": release_date.isoformat() if release_date else "",
+            "siteRank": site_rank or len(movies) + 1,
             "reservationRate": reservation_rate,
             "overview": str(item.get("movieSynopCn") or "").strip(),
             "source": "megabox",
         })
 
-    movies.sort(key=lambda movie: -movie["reservationRate"])
+    # 메가박스 '박스오피스' 순위(사이트 순서)를 그대로 쓴다
+    movies.sort(key=lambda movie: movie["siteRank"])
     for rank, movie in enumerate(movies, start=1):
         movie["rank"] = rank
     if not movies:
-        raise ValueError("Megabox chart contains no released movies")
+        raise ValueError("Megabox chart contains no movies")
 
     return {
         "asOf": date.today().isoformat(),
@@ -425,10 +478,10 @@ def normalize_megabox_chart(payload):
     }
 
 
-def get_live_megabox_chart(force_refresh=False):
+def get_live_megabox_chart():
     global MEGABOX_CHART_CACHE, MEGABOX_CHART_CACHE_UNTIL
     with MEGABOX_CHART_CACHE_LOCK:
-        if not force_refresh and MEGABOX_CHART_CACHE is not None and time.monotonic() < MEGABOX_CHART_CACHE_UNTIL:
+        if MEGABOX_CHART_CACHE is not None and time.monotonic() < MEGABOX_CHART_CACHE_UNTIL:
             return MEGABOX_CHART_CACHE
 
         params = {
@@ -454,7 +507,7 @@ def get_live_megabox_chart(force_refresh=False):
             },
         )
         with urlopen(request, timeout=15) as response:
-            chart = normalize_megabox_chart(json.load(response))
+            chart = fill_chart_overviews(normalize_megabox_chart(json.load(response)), "megabox")
         MEGABOX_CHART_CACHE = chart
         MEGABOX_CHART_CACHE_UNTIL = time.monotonic() + MEGABOX_CHART_REFRESH_SECONDS
         return chart
@@ -645,24 +698,21 @@ class MovieRequestHandler(SimpleHTTPRequestHandler):
         request = urlsplit(self.path)
         if request.path == "/api/cgv-chart":
             try:
-                force_refresh = parse_qs(request.query).get("refresh") == ["1"]
-                send_json(self, 200, get_live_cgv_chart(force_refresh=force_refresh))
+                send_json(self, 200, serve_cgv_chart())
             except (HTTPError, URLError, TimeoutError, RuntimeError, json.JSONDecodeError, KeyError, TypeError, ValueError) as error:
                 print(f"CGV chart refresh failed: {error}", file=sys.stderr)
                 send_json(self, 502, {"error": "CGV movie chart is currently unavailable"})
             return
         if request.path == "/api/lotte-chart":
             try:
-                force_refresh = parse_qs(request.query).get("refresh") == ["1"]
-                send_json(self, 200, get_live_lotte_chart(force_refresh=force_refresh))
+                send_json(self, 200, serve_lotte_chart())
             except (HTTPError, URLError, TimeoutError, RuntimeError, json.JSONDecodeError, KeyError, TypeError, ValueError) as error:
                 print(f"Lotte Cinema chart refresh failed: {error}", file=sys.stderr)
                 send_json(self, 502, {"error": "Lotte Cinema movie chart is currently unavailable"})
             return
         if request.path == "/api/megabox-chart":
             try:
-                force_refresh = parse_qs(request.query).get("refresh") == ["1"]
-                send_json(self, 200, get_live_megabox_chart(force_refresh=force_refresh))
+                send_json(self, 200, serve_megabox_chart())
             except (HTTPError, URLError, TimeoutError, RuntimeError, json.JSONDecodeError, KeyError, TypeError, ValueError) as error:
                 print(f"Megabox chart refresh failed: {error}", file=sys.stderr)
                 send_json(self, 502, {"error": "Megabox movie chart is currently unavailable"})
@@ -740,20 +790,201 @@ class MovieRequestHandler(SimpleHTTPRequestHandler):
         super().do_GET()
 
 
-def check_live_charts():
-    """서버를 켜자마자 세 영화관 순위를 한 번씩 받아 보고 결과를 터미널에 알려 준다."""
-    print("영화관 실시간 순위 확인 중...")
-    for name, fetch in (("CGV", get_live_cgv_chart), ("롯데시네마", get_live_lotte_chart), ("메가박스", get_live_megabox_chart)):
+def serve_stale_while_refreshing(fetch, max_age=60):
+    """마지막으로 받은 순위를 바로 돌려주고, 오래됐으면 뒤에서 새로 받아 둔다.
+    앱 화면이 영화관 사이트 응답을 기다리느라 늦게 뜨지 않게 한다."""
+    state = {"chart": None, "at": 0.0, "refreshing": False}
+    lock = threading.Lock()
+
+    def refresh():
         try:
             chart = fetch()
-            top = ", ".join(movie["title"] for movie in chart["movies"][:3])
-            print(f"  [성공] {name} 실시간 순위 {len(chart['movies'])}편 — 1~3위: {top}")
-        except Exception as error:  # 어떤 오류든 원인을 보여 주고 앱은 대체 순위를 쓴다
-            print(f"  [실패] {name} 순위를 받지 못했어요 ({type(error).__name__}: {error}). 앱은 대체 순위를 표시합니다.")
+            with lock:
+                state["chart"], state["at"] = chart, time.monotonic()
+        except Exception as error:
+            print(f"Background chart refresh failed: {error}", file=sys.stderr)
+        finally:
+            with lock:
+                state["refreshing"] = False
+
+    def get():
+        with lock:
+            chart, age = state["chart"], time.monotonic() - state["at"]
+            if chart is not None and age >= max_age and not state["refreshing"]:
+                state["refreshing"] = True
+                threading.Thread(target=refresh, daemon=True).start()
+        if chart is not None:
+            return chart
+        chart = fetch()  # 처음 한 번은 받아 올 때까지 기다린다
+        with lock:
+            state["chart"], state["at"] = chart, time.monotonic()
+        return chart
+
+    return get
+
+
+serve_cgv_chart = serve_stale_while_refreshing(lambda: get_live_cgv_chart())
+serve_lotte_chart = serve_stale_while_refreshing(lambda: get_live_lotte_chart())
+serve_megabox_chart = serve_stale_while_refreshing(lambda: get_live_megabox_chart())
+
+
+LIVE_CHARTS_JS = ROOT / "data" / "live-charts.js"
+LIVE_CHARTS_PREFIX = "window.MINPLY_LIVE_CHARTS = "
+UPDATE_TASK_NAME = "Minply 영화관 순위 업데이트"
+UPDATE_EVERY_MINUTES = 10
+
+
+def read_live_charts_file():
+    try:
+        text = LIVE_CHARTS_JS.read_text(encoding="utf-8")
+        start = text.find(LIVE_CHARTS_PREFIX)
+        if start >= 0:
+            payload = json.loads(text[start + len(LIVE_CHARTS_PREFIX):].strip().rstrip(";"))
+            return payload if isinstance(payload, dict) else {}
+    except (OSError, ValueError):
+        pass
+    return {}
+
+
+def write_live_charts_file(verbose=True):
+    """세 영화관 순위를 받아 data/live-charts.js 로 저장한다.
+    index.html 을 파일로 바로 열어도 이 파일은 <script> 로 읽을 수 있어서, 서버 없이도 최신 순위가 보인다.
+    한 영화관이 실패하면 그 영화관은 이전에 저장한 순위를 그대로 둔다."""
+    charts = read_live_charts_file()
+    results = {}
+    for key, name, fetch in (("cgv", "CGV", get_live_cgv_chart), ("lotte", "롯데시네마", get_live_lotte_chart), ("megabox", "메가박스", get_live_megabox_chart)):
+        try:
+            chart = fetch()
+            charts[key] = chart
+            results[name] = f"[성공] {len(chart['movies'])}편 — 1~3위: " + ", ".join(m["title"] for m in chart["movies"][:3])
+        except Exception as error:  # 어떤 오류든 기록하고 나머지 영화관은 계속 저장한다
+            results[name] = f"[실패] {type(error).__name__}: {error}"
+    if any(key in charts for key in ("cgv", "lotte", "megabox")):
+        body = LIVE_CHARTS_PREFIX + json.dumps(charts, ensure_ascii=False, separators=(",", ":")) + ";\n"
+        temp = LIVE_CHARTS_JS.with_suffix(".js.tmp")
+        temp.write_text("/* server.py 가 자동으로 만드는 파일입니다. 직접 고치지 마세요. */\n" + body, encoding="utf-8")
+        os.replace(temp, LIVE_CHARTS_JS)
+    if verbose:
+        for name, result in results.items():
+            print(f"  {name}: {result}", flush=True)
+    return results
+
+
+def update_charts_with_retry(tries=6, wait=30):
+    """PC를 켠 직후에는 인터넷 연결이 늦게 잡히는 경우가 많아서, 한 영화관이라도 받아질 때까지 몇 번 다시 시도한다."""
+    for attempt in range(1, tries + 1):
+        results = write_live_charts_file()
+        if any(str(result).startswith("[성공]") for result in results.values()):
+            return True
+        if attempt < tries:
+            time.sleep(wait)
+    return False
+
+
+def windows_startup_file():
+    """Windows 시작프로그램 폴더 (로그인하면 안의 파일이 자동 실행됨, 관리자 권한 필요 없음)"""
+    base = Path(os.environ.get("APPDATA") or Path.home() / "AppData" / "Roaming")
+    return base / "Microsoft" / "Windows" / "Start Menu" / "Programs" / "Startup" / f"{UPDATE_TASK_NAME}.vbs"
+
+
+def startup_vbs_text(runner, script):
+    """PC를 켜고 로그인하면 창 없이 순위를 한 번 갱신하는 스크립트 (경로의 큰따옴표는 VBScript 방식으로 두 번 씀)"""
+    command = f'"{runner}" "{script}" --update-charts --at-startup'.replace('"', '""')
+    return ("' Minply: PC를 켜면 영화관 순위를 바로 갱신합니다. (python js/server.py --remove-auto-update 로 지울 수 있어요)\n"
+            f'CreateObject("WScript.Shell").Run "{command}", 0, False\n')
+
+
+def cron_lines(python, script):
+    """macOS·Linux crontab: 10분마다 + 켜질 때(@reboot) 한 번 갱신"""
+    run = f'"{python}" "{script}" --update-charts'
+    return [f"*/{UPDATE_EVERY_MINUTES} * * * * {run} >/dev/null 2>&1 # minply-charts",
+            f"@reboot {run} --at-startup >/dev/null 2>&1 # minply-charts"]
+
+
+def windows_task_args(runner, script):
+    """Windows 작업 스케줄러(schtasks) 등록 명령: 10분마다 server.py --update-charts 실행"""
+    command = f'"{runner}" "{script}" --update-charts'
+    return ["schtasks", "/Create", "/F", "/SC", "MINUTE", "/MO", str(UPDATE_EVERY_MINUTES),
+            "/TN", UPDATE_TASK_NAME, "/TR", command]
+
+
+def install_auto_update():
+    """10분마다 data/live-charts.js 를 갱신하는 예약 작업을 컴퓨터에 등록한다."""
+    script = Path(__file__).resolve()
+    if os.name == "nt":
+        import subprocess
+        pythonw = Path(sys.executable).with_name("pythonw.exe")
+        runner = pythonw if pythonw.exists() else Path(sys.executable)  # pythonw: 갱신할 때 검은 창이 뜨지 않음
+        subprocess.run(windows_task_args(str(runner), str(script)), check=True)
+        print(f"Windows 작업 스케줄러에 '{UPDATE_TASK_NAME}'을(를) 등록했어요. {UPDATE_EVERY_MINUTES}분마다 순위를 갱신합니다.")
+        startup = windows_startup_file()
+        try:
+            startup.parent.mkdir(parents=True, exist_ok=True)
+            startup.write_text(startup_vbs_text(runner, script), encoding="utf-16")  # 한글 경로도 읽을 수 있게 UTF-16
+            print("PC를 켜고 로그인하면 바로 한 번 갱신하도록 시작프로그램에 등록했어요.")
+        except OSError as error:
+            print(f"시작프로그램 등록 실패(10분마다 갱신은 그대로 동작): {error}", file=sys.stderr)
+    else:
+        import subprocess
+        current = subprocess.run(["crontab", "-l"], capture_output=True, text=True).stdout
+        kept = [row for row in current.splitlines() if "# minply-charts" not in row]
+        subprocess.run(["crontab", "-"], input="\n".join(kept + cron_lines(sys.executable, script)) + "\n", text=True, check=True)
+        print(f"crontab에 {UPDATE_EVERY_MINUTES}분마다, 그리고 컴퓨터를 켤 때 순위를 갱신하는 작업을 등록했어요.")
+    print("지금 바로 한 번 갱신합니다...")
+    write_live_charts_file()
+
+
+def remove_auto_update():
+    import subprocess
+    if os.name == "nt":
+        subprocess.run(["schtasks", "/Delete", "/F", "/TN", UPDATE_TASK_NAME], check=False)
+        try:
+            windows_startup_file().unlink()
+        except OSError:
+            pass
+    else:
+        current = subprocess.run(["crontab", "-l"], capture_output=True, text=True).stdout
+        kept = [row for row in current.splitlines() if "# minply-charts" not in row]
+        subprocess.run(["crontab", "-"], input="\n".join(kept) + "\n", text=True, check=False)
+    print("순위 자동 갱신 작업을 지웠어요.")
+
+
+def keep_live_charts_file_fresh(interval=60):
+    """서버가 켜져 있는 동안에는 1분마다 data/live-charts.js 도 함께 갱신한다."""
+    while True:
+        time.sleep(interval)
+        try:
+            write_live_charts_file(verbose=False)
+        except OSError as error:
+            print(f"live-charts.js 저장 실패: {error}", file=sys.stderr)
+
+
+def check_live_charts():
+    """서버를 켜자마자 세 영화관 순위를 한 번씩 받아 보고 결과를 터미널에 알려 준다."""
+    print("영화관 실시간 순위 확인 중...", flush=True)
+    write_live_charts_file()
+    for fetch in (serve_cgv_chart, serve_lotte_chart, serve_megabox_chart):
+        try:
+            fetch()  # 화면 요청에 바로 응답할 수 있게 미리 받아 둔다
+        except Exception:
+            pass
+    threading.Thread(target=keep_live_charts_file_fresh, daemon=True).start()
 
 
 def main():
     global MOVIE_CATALOG
+    if "--update-charts" in sys.argv:
+        if "--at-startup" in sys.argv:
+            update_charts_with_retry()  # 켜자마자: 인터넷이 잡힐 때까지 최대 약 3분 재시도
+        else:
+            write_live_charts_file()
+        return
+    if "--install-auto-update" in sys.argv:
+        install_auto_update()
+        return
+    if "--remove-auto-update" in sys.argv:
+        remove_auto_update()
+        return
     if "--build-json" in sys.argv:
         MOVIE_CATALOG = refresh_json()
         print(f"Updated {len(MOVIE_CATALOG)} released theater/OTT movies in {JSON_PATH}")
