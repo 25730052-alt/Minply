@@ -359,6 +359,8 @@
         const sourceMark = source ? `<span class="movie-source movie-source--${source}" title="${sourceLabel}에서 불러옴" aria-label="${sourceLabel}에서 불러옴">${sourceLetter}</span>` : '';
         return `<div class="poster ${cls}"><span class="poster__t">${esc(title)}</span>${img}${badge ? `<span class="badge ${badgeClass}">${badge}</span>` : ''}${sourceMark}</div>`;
     }
+    /* 포스터 상자 안(오른쪽 아래)에 찜 하트를 넣는다 */
+    const posterWithHeart = (posterMarkup, heartMarkup) => posterMarkup.replace(/<\/div>$/, `${heartMarkup}</div>`);
     function availabilityBadge(movie) {
         const types = [
             ['theater', 'fa-film', '극장'],
@@ -862,9 +864,11 @@
             const rank = isCgv ? movie.cgvRank || index + 1 : movie.rank || index + 1;
             const rate = isCgv ? movie.cgvReservationRate : movie.reservationRate;
             const href = isCgv ? `${url('movie')}?movieId=${movie.movieId}` : chartMovieHref(movie, providerKey);
+            let heart = heartButton(movie, isCgv ? '' : providerKey, 'heart-btn--chart');
+            if (duplicate) heart = heart.replace('<button ', '<button tabindex="-1" ');
             return `
             <a class="cgv-chart-card" data-chart-copy="${copy}" data-chart-index="${index}" role="${duplicate ? 'presentation' : 'listitem'}" href="${href}"${duplicate ? ' aria-hidden="true" tabindex="-1"' : ''} aria-label="${provider} 예매율 순위 ${rank}위 ${esc(movie.title)} 상세 보기">
-                ${posterHtml(movie.title, movie.posterPath, '', String(rank), 'badge--rank', movie.source)}
+                ${posterWithHeart(posterHtml(movie.title, movie.posterPath, '', String(rank), 'badge--rank', movie.source), heart)}
                 <strong>${esc(movie.title)}</strong>
                 <span>예매율 ${Number(rate).toFixed(1)}%</span>
             </a>`;
@@ -1180,20 +1184,30 @@
             .slice(0, 9)
             .sort((a, b) => ratingOf(b) - ratingOf(a) || (Number(b.voteCount) || 0) - (Number(a.voteCount) || 0));
         const reviews = [highestRatedCgvMovie, ...evergreenNetflixMovies].filter(Boolean).slice(0, 10);
-        $('#communityReviews').innerHTML = reviews.map((movie, index) => `
+        $('#communityReviews').innerHTML = reviews.map((movie, index) => {
+            const rating = ratingOf(movie);
+            const genres = (movie.genreIds || []).map(genreName).filter(Boolean).slice(0, 2);
+            const isCgvPick = movie === highestRatedCgvMovie;
+            return `
                 <li class="community-review">
                     <a class="community-review__link" href="${url('movie')}?movieId=${movie.movieId}">
                         <div class="community-review__top">
                             <span class="community-review__rank">${index + 1}</span>
-                            ${posterHtml(movie.title, movie.posterPath, 'poster--xs community-review__poster', '', '', movie.source)}
+                            ${posterWithHeart(posterHtml(movie.title, movie.posterPath, 'poster--xs community-review__poster', '', '', movie.source), heartButton(movie, '', 'heart-btn--mini'))}
                             <div class="community-review__movie">
                                 <strong>${esc(movie.title)}</strong>
-                                <span>${movie === highestRatedCgvMovie ? 'CGV 상영작' : `${movie.releaseDate.slice(0, 4)} · OTT 스테디셀러`}</span>
-                                <span class="community-review__rating"><i class="fa-solid fa-star" aria-hidden="true"></i> ${ratingOf(movie).toFixed(1)} / 5.0</span>
+                                <span>${isCgvPick ? `${movie.releaseDate ? movie.releaseDate.slice(0, 4) + ' · ' : ''}CGV 상영작` : `${movie.releaseDate.slice(0, 4)} · OTT 스테디셀러`}</span>
+                                ${genres.length ? `<span class="community-review__genres">${genres.map((g) => `<em>${esc(g)}</em>`).join('')}</span>` : ''}
+                            </div>
+                            <div class="community-review__score" aria-label="관객 평점 5점 만점에 ${rating.toFixed(1)}점">
+                                <b>${rating.toFixed(1)}</b>
+                                <span class="score-stars" aria-hidden="true"><span style="width:${Math.max(0, Math.min(100, rating / 5 * 100)).toFixed(0)}%"></span></span>
+                                <small>/ 5.0</small>
                             </div>
                         </div>
                     </a>
-                </li>`).join('');
+                </li>`;
+        }).join('');
     }
 
     function initHome() {
@@ -1379,6 +1393,7 @@
        ===================================================== */
     function initSearch() {
         const s = { query: '', viewType: 'all', genreId: 0, sort: 'popularity', ...session.get(SESSION.search, {}) };
+        if (!['popularity', 'latest'].includes(s.sort)) s.sort = 'popularity'; /* 예전에 고른 제목순 등은 인기순으로 */
         if (s.genreId === 18) s.genreId = 0;
         let genreExpanded = false;
         const persist = () => session.set(SESSION.search, s);
@@ -1440,8 +1455,7 @@
                     }
                     return b.popularity - a.popularity;
                 },
-                latest: (a, b) => b.releaseDate.localeCompare(a.releaseDate),
-                title: (a, b) => a.title.localeCompare(b.title, 'ko')
+                latest: (a, b) => b.releaseDate.localeCompare(a.releaseDate)
             };
             return list.sort(sorters[s.sort]);
         };
@@ -1467,19 +1481,18 @@
             $('#resultCount').textContent = empty ? '검색 결과 · 0편' : `${s.query || s.genreId || s.viewType !== 'all' ? '검색 결과' : '인기 영화'} ${list.length}편`;
             $('#loadMoreMovies').hidden = !apiHasMore;
             const isTheaterList = s.viewType === 'theater';
-            $('#movieGrid').innerHTML = list.map((m, index) => {
+            $('#movieGrid').innerHTML = list.map((m) => {
                 const href = m.chartProvider && m.chartProvider !== 'cgv'
                     ? chartMovieHref(m, m.chartProvider)
                     : `${url('movie')}?movieId=${encodeURIComponent(m.movieId)}`;
-                const badge = index + 1;
                 return `
                 <div class="card-wrap">
                 <a class="card" href="${href}">
-                    ${posterHtml(m.title, m.posterPath, '', String(badge).padStart(2, '0'), 'badge--rank', m.source)}
+                    ${posterHtml(m.title, m.posterPath, '', '', '', m.source)}
                     <p class="card__t">${esc(m.title)}</p>
                     <p class="card__m">${isTheaterList && m.providers
                         ? `${m.providers.map((provider) => ({ cgv: 'CGV', lotte: '롯데', megabox: '메가' })[provider]).join('·')} · 예매율 ${m.theaterReservationRate.toFixed(1)}%`
-                        : `${m.releaseDate?.slice(0, 4) || (m.source === 'cgv' ? 'CGV 상영 중' : '')}${m.genreIds[0] ? ' · ' + esc(genreName(m.genreIds[0])) : ''}${m.voteAverage ? ` · ★ ${m.voteAverage.toFixed(1)}` : ''}`}</p>
+                        : `${m.releaseDate?.slice(0, 4) || (m.source === 'cgv' ? 'CGV 상영 중' : '')}${m.genreIds[0] && genreName(m.genreIds[0]) ? ' · ' + esc(genreName(m.genreIds[0])) : ''}${m.voteAverage ? ` · ★ ${m.voteAverage.toFixed(1)}` : ''}`}</p>
                 </a>
                 <div class="card-wrap__poster">${heartButton(m, m.chartProvider && m.chartProvider !== 'cgv' ? m.chartProvider : '', 'heart-btn--card')}</div>
                 </div>`;
@@ -1770,13 +1783,13 @@
        6·7 마이 티켓북 (그리드 / 캘린더)
        ===================================================== */
     const my = { tag: '', sort: 'recent', ...session.get(SESSION.my, {}) };
+    if (!['recent', 'old'].includes(my.sort)) my.sort = 'recent'; /* 예전에 고른 제목순은 최근 관람순으로 */
     const persistMy = () => session.set(SESSION.my, my);
 
     function filteredTickets() {
         const sorters = {
             recent: (a, b) => b.watchedAt.localeCompare(a.watchedAt),
-            old: (a, b) => a.watchedAt.localeCompare(b.watchedAt),
-            title: (a, b) => a.movieTitle.localeCompare(b.movieTitle, 'ko')
+            old: (a, b) => a.watchedAt.localeCompare(b.watchedAt)
         };
         return myTickets().filter((t) => !my.tag || t.tags.includes(my.tag)).sort(sorters[my.sort]);
     }

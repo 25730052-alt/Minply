@@ -534,3 +534,20 @@ body { min-height: 0 !important; }
 @media (max-width: 430px) {
     body .app { position: fixed; inset: 0; width: 100%; max-width: none; height: auto; }
 }
+
+/* ---------- 무비차트·평점 랭킹 찜 하트 + 랭킹 오른쪽 평점 칸 (v0.6.6) ---------- */
+.cgv-chart-card .heart-btn--chart { position: absolute; right: 10px; bottom: 10px; z-index: 4; width: 36px; height: 36px; }
+.community-review__poster .heart-btn--mini { position: absolute; right: 3px; bottom: 3px; z-index: 4; width: 22px; height: 22px; box-shadow: 0 1px 3px rgba(0, 0, 0, .25); }
+.community-review__top { grid-template-columns: 24px 52px minmax(0, 1fr) auto; }
+.community-review__genres { display: flex !important; gap: 4px; margin-top: 6px !important; white-space: normal !important; }
+.community-review__genres em {
+    font-style: normal; padding: 1px 7px; border-radius: 999px;
+    background: var(--g100, #f1f1ef); color: var(--g700, #555); font-size: 10px; line-height: 1.6;
+}
+.community-review__score { display: flex; flex-direction: column; align-items: flex-end; justify-content: center; align-self: center; min-width: 62px; padding-right: 4px; text-align: right; }
+.community-review__score b { font-size: 18px; font-weight: 800; line-height: 1.1; color: var(--ink, #222); letter-spacing: -.02em; }
+.community-review__score small { margin-top: 3px; color: var(--g500, #8a8a8a); font-size: 10px; white-space: nowrap; }
+.score-stars { position: relative; display: inline-block; margin-top: 3px; font-size: 11px; line-height: 1; letter-spacing: 1px; color: var(--g300, #d6d6d3); }
+.score-stars::before { content: '★★★★★'; }
+.score-stars > span { position: absolute; top: 0; left: 0; overflow: hidden; white-space: nowrap; color: #f5b301; }
+.score-stars > span::before { content: '★★★★★'; }
