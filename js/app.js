@@ -1193,9 +1193,9 @@
                     <a class="community-review__link" href="${url('movie')}?movieId=${movie.movieId}">
                         <div class="community-review__top">
                             <span class="community-review__rank">${index + 1}</span>
-                            ${posterWithHeart(posterHtml(movie.title, movie.posterPath, 'poster--xs community-review__poster', '', '', movie.source), heartButton(movie, '', 'heart-btn--mini'))}
+                            ${posterHtml(movie.title, movie.posterPath, 'poster--xs community-review__poster', '', '', movie.source)}
                             <div class="community-review__movie">
-                                <strong>${esc(movie.title)}</strong>
+                                <div class="community-review__title"><strong>${esc(movie.title)}</strong>${heartButton(movie, '', 'heart-btn--mini')}</div>
                                 <span>${isCgvPick ? `${movie.releaseDate ? movie.releaseDate.slice(0, 4) + ' · ' : ''}CGV 상영작` : `${movie.releaseDate.slice(0, 4)} · OTT 스테디셀러`}</span>
                                 ${genres.length ? `<span class="community-review__genres">${genres.map((g) => `<em>${esc(g)}</em>`).join('')}</span>` : ''}
                             </div>

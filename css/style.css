@@ -537,7 +537,11 @@ body { min-height: 0 !important; }
 
 /* ---------- 무비차트·평점 랭킹 찜 하트 + 랭킹 오른쪽 평점 칸 (v0.6.6) ---------- */
 .cgv-chart-card .heart-btn--chart { position: absolute; right: 10px; bottom: 10px; z-index: 4; width: 36px; height: 36px; }
-.community-review__poster .heart-btn--mini { position: absolute; right: 3px; bottom: 3px; z-index: 4; width: 22px; height: 22px; box-shadow: 0 1px 3px rgba(0, 0, 0, .25); }
+/* 랭킹 찜 하트: 포스터를 가리지 않도록 제목 오른쪽에 */
+.community-review__title { display: flex; align-items: flex-start; gap: 4px; min-width: 0; }
+.community-review__title strong { min-width: 0; white-space: normal; word-break: keep-all; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.community-review__title .heart-btn--mini { flex: none; width: 24px; height: 24px; margin: -3px 0 -3px 2px; background: transparent; box-shadow: none; }
+.community-review__title .heart-btn--mini .heart-icon { width: 16px; height: 16px; }
 .community-review__top { grid-template-columns: 24px 52px minmax(0, 1fr) auto; }
 .community-review__genres { display: flex !important; gap: 4px; margin-top: 6px !important; white-space: normal !important; }
 .community-review__genres em {
