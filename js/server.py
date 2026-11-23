@@ -4,6 +4,7 @@ import os
 import sys
 import threading
 import time
+import webbrowser
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date, datetime
 from functools import partial
@@ -24,12 +25,12 @@ TMDB_THEATER_URL = "https://api.themoviedb.org/3/movie/now_playing"
 TMDB_DISCOVER_URL = "https://api.themoviedb.org/3/discover/movie"
 POSTER_BASE_URL = "https://image.tmdb.org/t/p/w500"
 CGV_CHART_URL = "https://api.cgv.co.kr/met/dsp/scrDsp/searchScrDspCpotDtl"
-CGV_CHART_REFRESH_SECONDS = 300
+CGV_CHART_REFRESH_SECONDS = 60
 CGV_POSTER_BASE_URL = "https://cdn.cgv.co.kr"
 LOTTE_CHART_URL = "https://www.lottecinema.co.kr/LCWS/Movie/MovieData.aspx"
-LOTTE_CHART_REFRESH_SECONDS = 300
+LOTTE_CHART_REFRESH_SECONDS = 60
 MEGABOX_CHART_URL = "https://www.megabox.co.kr/on/oh/oha/Movie/selectMovieList.do"
-MEGABOX_CHART_REFRESH_SECONDS = 300
+MEGABOX_CHART_REFRESH_SECONDS = 60
 MEGABOX_IMAGE_BASE_URL = "https://img.megabox.co.kr"
 JSON_MOVIE_COUNT = 100
 PAGE_SIZE = 20
@@ -243,10 +244,10 @@ def normalize_cgv_chart(payload):
     }
 
 
-def get_live_cgv_chart():
+def get_live_cgv_chart(force_refresh=False):
     global CGV_CHART_CACHE, CGV_CHART_CACHE_UNTIL
     with CGV_CHART_CACHE_LOCK:
-        if CGV_CHART_CACHE is not None and time.monotonic() < CGV_CHART_CACHE_UNTIL:
+        if not force_refresh and CGV_CHART_CACHE is not None and time.monotonic() < CGV_CHART_CACHE_UNTIL:
             return CGV_CHART_CACHE
 
         query = urlencode({"coCd": "A420", "unitCpotRelNo": 1})
@@ -256,7 +257,8 @@ def get_live_cgv_chart():
                 "Accept": "application/json, text/plain, */*",
                 "Origin": "https://cgv.co.kr",
                 "Referer": "https://cgv.co.kr/cnm/cgvChart/movieChart?tabParam=75",
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/130 Safari/537.36",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
+                "Accept-Language": "ko-KR,ko;q=0.9,en;q=0.8",
             },
         )
         with urlopen(request, timeout=15) as response:
@@ -320,10 +322,10 @@ def normalize_lotte_chart(payload):
     }
 
 
-def get_live_lotte_chart():
+def get_live_lotte_chart(force_refresh=False):
     global LOTTE_CHART_CACHE, LOTTE_CHART_CACHE_UNTIL
     with LOTTE_CHART_CACHE_LOCK:
-        if LOTTE_CHART_CACHE is not None and time.monotonic() < LOTTE_CHART_CACHE_UNTIL:
+        if not force_refresh and LOTTE_CHART_CACHE is not None and time.monotonic() < LOTTE_CHART_CACHE_UNTIL:
             return LOTTE_CHART_CACHE
 
         params = {
@@ -355,7 +357,8 @@ def get_live_lotte_chart():
                 "Content-Type": f"multipart/form-data; boundary={boundary}",
                 "Origin": "https://www.lottecinema.co.kr",
                 "Referer": "https://www.lottecinema.co.kr/NLCHS/Movie/List?flag=1",
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/130 Safari/537.36",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
+                "Accept-Language": "ko-KR,ko;q=0.9,en;q=0.8",
             },
         )
         with urlopen(request, timeout=15) as response:
@@ -422,10 +425,10 @@ def normalize_megabox_chart(payload):
     }
 
 
-def get_live_megabox_chart():
+def get_live_megabox_chart(force_refresh=False):
     global MEGABOX_CHART_CACHE, MEGABOX_CHART_CACHE_UNTIL
     with MEGABOX_CHART_CACHE_LOCK:
-        if MEGABOX_CHART_CACHE is not None and time.monotonic() < MEGABOX_CHART_CACHE_UNTIL:
+        if not force_refresh and MEGABOX_CHART_CACHE is not None and time.monotonic() < MEGABOX_CHART_CACHE_UNTIL:
             return MEGABOX_CHART_CACHE
 
         params = {
@@ -446,7 +449,8 @@ def get_live_megabox_chart():
                 "Origin": "https://www.megabox.co.kr",
                 "Referer": "https://www.megabox.co.kr/movie",
                 "X-Requested-With": "XMLHttpRequest",
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/130 Safari/537.36",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
+                "Accept-Language": "ko-KR,ko;q=0.9,en;q=0.8",
             },
         )
         with urlopen(request, timeout=15) as response:
@@ -605,36 +609,60 @@ def load_csv_fallback():
     return [{"id": genre_id, "name": name} for genre_id, name in sorted(genres.items())], movies
 
 
+CHART_PATHS = {"/api/cgv-chart", "/api/lotte-chart", "/api/megabox-chart"}
+
+
+def send_cors_headers(handler):
+    # index.html 을 파일(file://)로 연 앱도 영화관 순위를 받아 갈 수 있게 허용 (공개 순위 데이터만 해당)
+    handler.send_header("Access-Control-Allow-Origin", "*")
+    handler.send_header("Access-Control-Allow-Methods", "GET, OPTIONS")
+    handler.send_header("Access-Control-Allow-Private-Network", "true")
+
+
 def send_json(handler, status, payload):
     body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
     handler.send_response(status)
     handler.send_header("Content-Type", "application/json; charset=utf-8")
     handler.send_header("Content-Length", str(len(body)))
     handler.send_header("Cache-Control", "no-store")
+    if urlsplit(handler.path).path in CHART_PATHS:
+        send_cors_headers(handler)
     handler.end_headers()
     handler.wfile.write(body)
 
 
 class MovieRequestHandler(SimpleHTTPRequestHandler):
+    def do_OPTIONS(self):
+        if urlsplit(self.path).path in CHART_PATHS:
+            self.send_response(204)
+            send_cors_headers(self)
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+            return
+        self.send_error(405)
+
     def do_GET(self):
         request = urlsplit(self.path)
         if request.path == "/api/cgv-chart":
             try:
-                send_json(self, 200, get_live_cgv_chart())
+                force_refresh = parse_qs(request.query).get("refresh") == ["1"]
+                send_json(self, 200, get_live_cgv_chart(force_refresh=force_refresh))
             except (HTTPError, URLError, TimeoutError, RuntimeError, json.JSONDecodeError, KeyError, TypeError, ValueError) as error:
                 print(f"CGV chart refresh failed: {error}", file=sys.stderr)
                 send_json(self, 502, {"error": "CGV movie chart is currently unavailable"})
             return
         if request.path == "/api/lotte-chart":
             try:
-                send_json(self, 200, get_live_lotte_chart())
+                force_refresh = parse_qs(request.query).get("refresh") == ["1"]
+                send_json(self, 200, get_live_lotte_chart(force_refresh=force_refresh))
             except (HTTPError, URLError, TimeoutError, RuntimeError, json.JSONDecodeError, KeyError, TypeError, ValueError) as error:
                 print(f"Lotte Cinema chart refresh failed: {error}", file=sys.stderr)
                 send_json(self, 502, {"error": "Lotte Cinema movie chart is currently unavailable"})
             return
         if request.path == "/api/megabox-chart":
             try:
-                send_json(self, 200, get_live_megabox_chart())
+                force_refresh = parse_qs(request.query).get("refresh") == ["1"]
+                send_json(self, 200, get_live_megabox_chart(force_refresh=force_refresh))
             except (HTTPError, URLError, TimeoutError, RuntimeError, json.JSONDecodeError, KeyError, TypeError, ValueError) as error:
                 print(f"Megabox chart refresh failed: {error}", file=sys.stderr)
                 send_json(self, 502, {"error": "Megabox movie chart is currently unavailable"})
@@ -712,6 +740,18 @@ class MovieRequestHandler(SimpleHTTPRequestHandler):
         super().do_GET()
 
 
+def check_live_charts():
+    """서버를 켜자마자 세 영화관 순위를 한 번씩 받아 보고 결과를 터미널에 알려 준다."""
+    print("영화관 실시간 순위 확인 중...")
+    for name, fetch in (("CGV", get_live_cgv_chart), ("롯데시네마", get_live_lotte_chart), ("메가박스", get_live_megabox_chart)):
+        try:
+            chart = fetch()
+            top = ", ".join(movie["title"] for movie in chart["movies"][:3])
+            print(f"  [성공] {name} 실시간 순위 {len(chart['movies'])}편 — 1~3위: {top}")
+        except Exception as error:  # 어떤 오류든 원인을 보여 주고 앱은 대체 순위를 쓴다
+            print(f"  [실패] {name} 순위를 받지 못했어요 ({type(error).__name__}: {error}). 앱은 대체 순위를 표시합니다.")
+
+
 def main():
     global MOVIE_CATALOG
     if "--build-json" in sys.argv:
@@ -729,6 +769,9 @@ def main():
     handler = partial(MovieRequestHandler, directory=str(ROOT))
     server = ThreadingHTTPServer(("127.0.0.1", 8000), handler)
     print("Minply is available at http://127.0.0.1:8000")
+    threading.Thread(target=check_live_charts, daemon=True).start()
+    if "--no-browser" not in sys.argv:
+        threading.Timer(1.0, lambda: webbrowser.open("http://127.0.0.1:8000/index.html")).start()
     try:
         server.serve_forever()
     except KeyboardInterrupt:

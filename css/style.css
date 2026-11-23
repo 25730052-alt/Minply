@@ -484,10 +484,9 @@ ul { list-style: none; }
 .poster--xs { border-radius: 6px; }
 .movie-detail .poster--movie, .d .poster--lg { border-radius: 14px; }
 .stack--row .btn--text { border-radius: 12px; }
-/* PC에서 볼 때 모바일 화면 틀도 휴대폰처럼 둥글게 */
-@media (min-width: 431px) {
-    body .app { border-radius: 28px; overflow: hidden; box-shadow: 0 10px 30px rgba(0, 0, 0, .12); }
-}
+/* PC에서 볼 때 모바일 화면 틀: 모서리 없이 위아래 꽉 채움 */
+html, body { margin: 0; padding: 0; }
+body .app { border-radius: 0; height: 100vh; height: 100dvh; margin-top: 0; margin-bottom: 0; }
 
 /* 저장 완료 화면 버튼 — 가로 3칸 */
 .stack--row { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
@@ -497,3 +496,14 @@ ul { list-style: none; }
 }
 .stack--row .btn i { font-size: 14px; }
 .stack--row .btn--text { border-color: var(--g300); color: var(--g700); }
+.dialog__box p { word-break: keep-all; }
+/* 무비차트 갱신 상태 (v0.5.2) */
+.cinema-chart-head > div:first-child { display: flex; align-items: baseline; gap: 6px; }
+.chart-status { font-size: 10.5px; color: var(--g500, #8a8a8a); white-space: nowrap; }
+.chart-status.is-live { color: #2f9e5b; font-weight: 600; }
+.chart-status.is-live::before { content: ''; display: inline-block; width: 6px; height: 6px; margin-right: 4px; border-radius: 50%; background: currentColor; vertical-align: 1px; }
+/* 영화관 공식 순위 바로가기 */
+.chart-site-link { display: table; margin: 6px auto 0; padding: 5px 12px; border: 1px solid var(--g300, #d6d6d6); border-radius: 999px; font-size: 11.5px; color: var(--g700, #555); background: #fff; }
+.chart-site-link i { margin-left: 3px; font-size: 10px; }
+.chart-site-link:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+

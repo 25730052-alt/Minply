@@ -5,7 +5,15 @@
     'use strict';
 
     /* ===== 상수 ===== */
-    const STORE = { tickets: 'ticketbook.tickets', user: 'ticketbook.user', users: 'ticketbook.users' };
+    /* ===== 클라우드 DB(Supabase) 설정 =====
+       Supabase 프로젝트의 Project URL 과 anon public key 를 넣으면 닉네임 회원가입·로그인과
+       티켓 저장이 클라우드 DB로 바뀐다(기기가 바뀌어도 유지). 비워 두면 '기기 저장 모드'로 동작한다.
+       anon key 는 공개용 키라 프런트엔드에 넣어도 된다. 테이블 직접 접근은 막혀 있고 DB 함수로만 읽고 쓴다. (readme 4.1) */
+    const SUPABASE_CONFIG = {
+        url: '',
+        anonKey: ''
+    };
+    const STORE = { tickets: 'ticketbook.tickets', user: 'ticketbook.user', users: 'ticketbook.users', session: 'ticketbook.session', hasAccount: 'ticketbook.hasAccount' };
     const SESSION = { next: 'ticketbook.next', draft: 'ticketbook.draft', search: 'ticketbook.search', my: 'ticketbook.my' };
     const PRESET_TAGS = ['#설렘', '#혼자', '#눈물', '#친구와', '#재관람'];
     const FALLBACK_MOVIE_POSTERS = {
@@ -198,26 +206,26 @@
     const FALLBACK_LOTTE_CHART = {
         asOf: '2026-11-16',
         movies: [
-            ['24708', '극장판 치이카와: 인어 섬의 비밀', '2026-09-30', 'https://cf.lottecinema.co.kr/Media/MovieFile/MovieImg/202609/24708_503_1.jpg', 9.67],
-            ['25030', '극장판 마법소녀 마도카 마기카 ＜발푸르기스의 회천＞', '2026-11-04', 'https://cf.lottecinema.co.kr/Media/MovieFile/MovieImg/202611/25030_503_1.jpg', 6.61],
-            ['10893', '라라랜드', '2026-11-11', 'https://cf.lottecinema.co.kr/Media/MovieFile/MovieImg/201612/10893_503_1.jpg', 3.32],
-            ['24754', '폴2: 데드포인트', '2026-11-11', 'https://cf.lottecinema.co.kr/Media/MovieFile/MovieImg/202609/24754_503_1.jpg', 2.52],
-            ['24998', '최종면접', '2026-11-04', 'https://cf.lottecinema.co.kr/Media/MovieFile/MovieImg/202611/24998_503_1.jpg', 1.99],
-            ['25018', '그대, 별처럼', '2026-10-28', 'https://cf.lottecinema.co.kr/Media/MovieFile/MovieImg/202610/25018_503_1.jpg', 1.51],
-            ['14449', '포드 V 페라리', '2026-11-09', 'https://cf.lottecinema.co.kr/Media/MovieFile/MovieImg/201911/14449_503_1.jpg', 1.21],
-            ['24867', '하트 오브 비스트', '2026-10-28', 'https://cf.lottecinema.co.kr/Media/MovieFile/MovieImg/202610/24867_503_1.jpg', 1.09],
-            ['24744', '스크루지: 크리스마스 캐럴', '2026-11-11', 'https://cf.lottecinema.co.kr/Media/MovieFile/MovieImg/202611/24744_503_1.jpg', 0.94],
-            ['25189', '마리 앙투아네트', '2026-11-11', 'https://cf.lottecinema.co.kr/Media/MovieFile/MovieImg/202611/25189_503_1.jpg', 0.57],
-            ['25010', '와일드 호스 나인', '2026-11-04', 'https://cf.lottecinema.co.kr/Media/MovieFile/MovieImg/202611/25010_503_1.jpg', 0.57],
-            ['25022', '여전히 찬란하게', '2026-10-21', 'https://cf.lottecinema.co.kr/Media/MovieFile/MovieImg/202610/25022_503_1.jpg', 0.5],
-            ['24128', '오디세이', '2026-08-05', 'https://cf.lottecinema.co.kr/Media/MovieFile/MovieImg/202607/24128_503_1.jpg', 0.45],
-            ['24654', '타짜: 벨제붑의 노래', '2026-09-23', 'https://cf.lottecinema.co.kr/Media/MovieFile/MovieImg/202609/24654_503_1.jpg', 0.45],
-            ['14171', '알라딘', '2026-11-09', 'https://cf.lottecinema.co.kr/Media/MovieFile/MovieImg/201905/14171_503_1.jpg', 0.35],
-            ['25095', '호루몽', '2026-11-11', 'https://cf.lottecinema.co.kr/Media/MovieFile/MovieImg/202611/25095_503_1.jpg', 0.34],
-            ['25065', '프레셔', '2026-11-11', 'https://cf.lottecinema.co.kr/Media/MovieFile/MovieImg/202611/25065_503_1.jpg', 0.3],
-            ['25138', '삼춘, 어디 감수광?', '2026-11-11', 'https://cf.lottecinema.co.kr/Media/MovieFile/MovieImg/202611/25138_503_1.jpg', 0.18],
-            ['24623', '암살자(들)', '2026-09-23', 'https://cf.lottecinema.co.kr/Media/MovieFile/MovieImg/202609/24623_503_1.jpg', 0.15],
-            ['13319', '보헤미안 랩소디', '2026-11-09', 'https://cf.lottecinema.co.kr/Media/MovieFile/MovieImg/201810/13319_503_1.jpg', 0.1]
+            ['24708', '극장판 치이카와: 인어 섬의 비밀', '2026-09-30', 'https://cf.lottecinema.co.kr/Media/MovieFile/MovieImg/202609/24708_101_1.jpg', 9.67],
+            ['25030', '극장판 마법소녀 마도카 마기카 ＜발푸르기스의 회천＞', '2026-11-04', 'https://cf.lottecinema.co.kr/Media/MovieFile/MovieImg/202611/25030_101_1.jpg', 6.61],
+            ['10893', '라라랜드', '2026-11-11', 'https://cf.lottecinema.co.kr/Media/MovieFile/MovieImg/201612/10893_101_1.jpg', 3.32],
+            ['24754', '폴2: 데드포인트', '2026-11-11', 'https://cf.lottecinema.co.kr/Media/MovieFile/MovieImg/202609/24754_101_1.jpg', 2.52],
+            ['24998', '최종면접', '2026-11-04', 'https://cf.lottecinema.co.kr/Media/MovieFile/MovieImg/202611/24998_101_1.jpg', 1.99],
+            ['25018', '그대, 별처럼', '2026-10-28', 'https://cf.lottecinema.co.kr/Media/MovieFile/MovieImg/202610/25018_101_1.jpg', 1.51],
+            ['14449', '포드 V 페라리', '2026-11-09', 'https://cf.lottecinema.co.kr/Media/MovieFile/MovieImg/201911/14449_101_1.jpg', 1.21],
+            ['24867', '하트 오브 비스트', '2026-10-28', 'https://cf.lottecinema.co.kr/Media/MovieFile/MovieImg/202610/24867_101_1.jpg', 1.09],
+            ['24744', '스크루지: 크리스마스 캐럴', '2026-11-11', 'https://cf.lottecinema.co.kr/Media/MovieFile/MovieImg/202611/24744_101_1.jpg', 0.94],
+            ['25189', '마리 앙투아네트', '2026-11-11', 'https://cf.lottecinema.co.kr/Media/MovieFile/MovieImg/202611/25189_101_1.jpg', 0.57],
+            ['25010', '와일드 호스 나인', '2026-11-04', 'https://cf.lottecinema.co.kr/Media/MovieFile/MovieImg/202611/25010_101_1.jpg', 0.57],
+            ['25022', '여전히 찬란하게', '2026-10-21', 'https://cf.lottecinema.co.kr/Media/MovieFile/MovieImg/202610/25022_101_1.jpg', 0.5],
+            ['24128', '오디세이', '2026-08-05', 'https://cf.lottecinema.co.kr/Media/MovieFile/MovieImg/202607/24128_101_1.jpg', 0.45],
+            ['24654', '타짜: 벨제붑의 노래', '2026-09-23', 'https://cf.lottecinema.co.kr/Media/MovieFile/MovieImg/202609/24654_101_1.jpg', 0.45],
+            ['14171', '알라딘', '2026-11-09', 'https://cf.lottecinema.co.kr/Media/MovieFile/MovieImg/201905/14171_101_1.jpg', 0.35],
+            ['25095', '호루몽', '2026-11-11', 'https://cf.lottecinema.co.kr/Media/MovieFile/MovieImg/202611/25095_101_1.jpg', 0.34],
+            ['25065', '프레셔', '2026-11-11', 'https://cf.lottecinema.co.kr/Media/MovieFile/MovieImg/202611/25065_101_1.jpg', 0.3],
+            ['25138', '삼춘, 어디 감수광?', '2026-11-11', 'https://cf.lottecinema.co.kr/Media/MovieFile/MovieImg/202611/25138_101_1.jpg', 0.18],
+            ['24623', '암살자(들)', '2026-09-23', 'https://cf.lottecinema.co.kr/Media/MovieFile/MovieImg/202609/24623_101_1.jpg', 0.15],
+            ['13319', '보헤미안 랩소디', '2026-11-09', 'https://cf.lottecinema.co.kr/Media/MovieFile/MovieImg/201810/13319_101_1.jpg', 0.1]
         ].map(([movieCode, title, releaseDate, posterPath, reservationRate], index) => ({
             movieCode, title, releaseDate, posterPath, reservationRate, rank: index + 1, source: 'lotte'
         }))
@@ -253,9 +261,9 @@
         }))
     };
     const CHART_PROVIDERS = {
-        cgv: { name: 'CGV', chartName: 'CGV 무비차트' },
-        lotte: { name: '롯데시네마', chartName: '롯데시네마 무비차트' },
-        megabox: { name: '메가박스', chartName: '메가박스 무비차트' }
+        cgv: { name: 'CGV', chartName: 'CGV 무비차트', site: 'https://cgv.co.kr/' },
+        lotte: { name: '롯데시네마', chartName: '롯데시네마 무비차트', site: 'https://www.lottecinema.co.kr/NLCHS/Movie/List?flag=1' },
+        megabox: { name: '메가박스', chartName: '메가박스 무비차트', site: 'https://www.megabox.co.kr/movie' }
     };
     /* 롯데시네마·메가박스 전용 영화의 상세 화면용 숫자 id (TMDB·CGV id와 겹치지 않는 구간) */
     const CHART_ID_BASE = { lotte: 800000000, megabox: 900000000 };
@@ -271,7 +279,7 @@
     const uid = () => (crypto.randomUUID ? crypto.randomUUID() : `id-${Date.now()}-${Math.random().toString(16).slice(2)}`);
     const viewLabel = (t) => (VIEW_TYPES.find((v) => v.id === t) || {}).label || '';
     const formatRating = (rating) => Number(rating).toFixed(1).replace(/\.0$/, '');
-    const isValidPassword = (s) => /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/.test(s);
+    const isValidPassword = (s) => /^(?=.*[A-Za-z])(?=.*\d)\S{8,64}$/.test(s);
     const today = new Date();
     const params = new URLSearchParams(location.search);
 
@@ -343,7 +351,7 @@
     /* ===== 사용자 · 티켓 저장소 ===== */
     const data = {
         movies: [], genres: [], samples: [], cgvMovies: [], lotteMovies: [], megaboxMovies: [], activeChartProvider: 'cgv',
-        tickets: local.get(STORE.tickets, []), user: local.get(STORE.user, null)
+        tickets: [], user: null
     };
     const movieById = (id) => data.movies.find((m) => m.movieId === id) ||
         data.lotteMovies.find((m) => m.movieId === id) ||
@@ -353,9 +361,244 @@
     const chartMovieHref = (movie, provider) => `${url('movie')}?movieId=${encodeURIComponent(movie.movieId)}&chart=${provider}`;
     const genreName = (id) => (data.genres.find((g) => g.id === id) || {}).name || '';
     const myTickets = () => (data.user ? data.tickets.filter((t) => t.userId === data.user.userId) : []);
-    const saveTickets = () => local.set(STORE.tickets, data.tickets);
 
-    const CGV_CHART_REFRESH_MS = 5 * 60 * 1000;
+    /* =====================================================
+       인증 · 티켓 저장 계층 (닉네임 + 비밀번호)
+       - 클라우드 모드: Supabase Postgres. 비밀번호는 DB에서 bcrypt 해시로만 저장하고,
+         로그인하면 받은 세션 토큰으로 DB 함수(film_*)를 호출한다. 테이블 직접 접근은 막혀 있다.
+       - 기기 저장 모드: 설정 전/연결 실패 시. 비밀번호는 평문 대신 PBKDF2-SHA256 해시(+솔트)만 저장한다.
+       화면 코드는 아래 backend 함수만 호출하므로 저장 방식이 바뀌어도 화면 코드는 그대로다.
+       ===================================================== */
+    const cloud = (() => {
+        if (!SUPABASE_CONFIG.url || !SUPABASE_CONFIG.anonKey) return null;
+        if (!window.supabase?.createClient) {
+            console.warn('Supabase 라이브러리를 불러오지 못해 기기 저장 모드로 동작합니다.');
+            return null;
+        }
+        try {
+            return window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey, {
+                auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+            });
+        } catch (error) {
+            console.warn('Supabase 연결 설정이 올바르지 않아 기기 저장 모드로 동작합니다.', error);
+            return null;
+        }
+    })();
+    const isCloud = Boolean(cloud);
+
+    class AuthError extends Error {}
+    /* 가입되지 않은 닉네임으로 로그인했을 때 — 로그인 화면에서 회원가입 안내를 띄운다 */
+    class NotRegisteredError extends AuthError {}
+    const AUTH_MESSAGES = {
+        NOT_REGISTERED: '아직 가입하지 않은 닉네임이에요.',
+        WRONG_PASSWORD: '비밀번호가 맞지 않아요.',
+        NICKNAME_TAKEN: '이미 사용 중인 닉네임이에요.',
+        WEAK_PASSWORD: '비밀번호는 영문자와 숫자를 조합해 8자 이상 입력해 주세요.',
+        INVALID_NICKNAME: '닉네임은 1~20자로 입력해 주세요.',
+        SESSION_EXPIRED: '로그인이 만료되었어요. 다시 로그인해 주세요.',
+        TICKET_NOT_FOUND: '티켓을 찾을 수 없어요.'
+    };
+    function toAuthError(error) {
+        const msg = String(error?.message || error || '');
+        const code = Object.keys(AUTH_MESSAGES).find((key) => msg.includes(key));
+        if (code === 'NOT_REGISTERED') return new NotRegisteredError(AUTH_MESSAGES[code]);
+        if (code === 'SESSION_EXPIRED') local.del(STORE.session);
+        if (code) return new AuthError(AUTH_MESSAGES[code]);
+        if (/could not find the function|PGRST202/i.test(msg)) return new AuthError('DB 설정이 끝나지 않았어요. readme 4.1의 SQL을 Supabase에서 실행해 주세요.');
+        if (/fetch|network|failed to/i.test(msg)) return new AuthError('서버에 연결하지 못했어요. 인터넷 연결을 확인해 주세요.');
+        return new AuthError('처리 중 문제가 생겼어요. 잠시 후 다시 시도해 주세요.');
+    }
+    async function rpc(name, args) {
+        let result;
+        try {
+            result = await cloud.rpc(name, args);
+        } catch (error) {
+            throw toAuthError(error);
+        }
+        if (result.error) throw toAuthError(result.error);
+        return result.data;
+    }
+    const sessionToken = () => local.get(STORE.session, '');
+
+    /* 기기 저장 모드 비밀번호 해시 (Web Crypto PBKDF2) */
+    const PBKDF2_ITERATIONS = 210000;
+    const toHex = (buffer) => Array.from(new Uint8Array(buffer), (b) => b.toString(16).padStart(2, '0')).join('');
+    const fromHex = (hex) => new Uint8Array(hex.match(/../g).map((h) => parseInt(h, 16)));
+    async function hashPassword(password, saltHex = toHex(crypto.getRandomValues(new Uint8Array(16))), iterations = PBKDF2_ITERATIONS) {
+        if (!crypto.subtle) throw new AuthError('이 주소에서는 비밀번호를 안전하게 저장할 수 없어요. localhost 또는 https 주소로 열어 주세요.');
+        const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveBits']);
+        const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt: fromHex(saltHex), iterations, hash: 'SHA-256' }, key, 256);
+        return { salt: saltHex, passwordHash: toHex(bits), iterations };
+    }
+    const sameHash = (a, b) => a.length === b.length && [...a].reduce((diff, ch, i) => diff | (ch.charCodeAt(0) ^ b.charCodeAt(i)), 0) === 0;
+    const sameNickname = (a, b) => String(a || '').trim().toLocaleLowerCase() === String(b || '').trim().toLocaleLowerCase();
+    /* 예전 버전이 평문으로 저장한 비밀번호를 해시로 바꾸고 평문은 지운다 */
+    async function migrateLocalPasswords() {
+        const users = local.get(STORE.users, []);
+        if (!users.some((u) => typeof u.password === 'string')) return;
+        if (!crypto.subtle) return;
+        const upgraded = await Promise.all(users.map(async (user) => {
+            if (typeof user.password !== 'string') return user;
+            const { password, ...rest } = user;
+            return { ...rest, ...(await hashPassword(password)) };
+        }));
+        local.set(STORE.users, upgraded);
+    }
+
+    const backend = {
+        mode: isCloud ? 'cloud' : 'local',
+
+        /* 이 기기에서 가입하거나 로그인한 적이 있는지 — 처음이면 로그인 화면이 회원가입부터 보여 준다 */
+        hasAccountOnDevice() {
+            return local.get(STORE.hasAccount, false) === true || (!isCloud && local.get(STORE.users, []).length > 0);
+        },
+
+        /* 현재 로그인 사용자 { userId, nickname } 또는 null */
+        async currentUser() {
+            if (!isCloud) return local.get(STORE.user, null);
+            const token = sessionToken();
+            if (!token) return null;
+            const me = await rpc('film_me', { p_token: token });
+            if (!me) { local.del(STORE.session); return null; }
+            return me;
+        },
+
+        async signUp({ nickname, password }) {
+            if (!isCloud) {
+                const users = local.get(STORE.users, []);
+                if (users.some((u) => sameNickname(u.nickname, nickname))) throw new AuthError(AUTH_MESSAGES.NICKNAME_TAKEN);
+                const user = { userId: uid(), nickname, ...(await hashPassword(password)) };
+                users.push(user);
+                local.set(STORE.users, users);
+                const publicUser = { userId: user.userId, nickname };
+                local.set(STORE.user, publicUser);
+                local.set(STORE.hasAccount, true);
+                return { user: publicUser };
+            }
+            const result = await rpc('film_signup', { p_nickname: nickname, p_password: password });
+            local.set(STORE.session, result.token);
+            local.set(STORE.hasAccount, true);
+            return { user: result.user };
+        },
+
+        async signIn({ nickname, password }) {
+            if (!isCloud) {
+                const found = local.get(STORE.users, []).find((u) => sameNickname(u.nickname, nickname));
+                if (!found) throw new NotRegisteredError(AUTH_MESSAGES.NOT_REGISTERED);
+                const { passwordHash } = await hashPassword(password, found.salt, found.iterations || PBKDF2_ITERATIONS);
+                if (!sameHash(passwordHash, found.passwordHash || '')) throw new AuthError(AUTH_MESSAGES.WRONG_PASSWORD);
+                const publicUser = { userId: found.userId, nickname: found.nickname };
+                local.set(STORE.user, publicUser);
+                local.set(STORE.hasAccount, true);
+                return { user: publicUser };
+            }
+            const result = await rpc('film_login', { p_nickname: nickname, p_password: password });
+            local.set(STORE.session, result.token);
+            local.set(STORE.hasAccount, true);
+            return { user: result.user };
+        },
+
+        async signOut() {
+            if (isCloud) {
+                const token = sessionToken();
+                local.del(STORE.session);
+                if (token) { try { await rpc('film_logout', { p_token: token }); } catch { /* 네트워크 오류여도 이 기기에서는 로그아웃 */ } }
+                return;
+            }
+            local.del(STORE.user);
+        },
+
+        /* 로그인한 사용자의 티켓 전체 (기기 저장 모드는 이 기기의 모든 티켓 — 화면에서 내 것만 거른다) */
+        async loadMyTickets(user) {
+            if (!user) return [];
+            if (!isCloud) return local.get(STORE.tickets, []);
+            return rpc('film_my_tickets', { p_token: sessionToken() });
+        },
+
+        /* 새 티켓이면 추가, ticketId가 있으면 수정. 저장된 티켓을 돌려준다 */
+        async saveTicket(fields, ticketId) {
+            if (!isCloud) {
+                const all = local.get(STORE.tickets, []);
+                let ticket = ticketId && all.find((t) => t.ticketId === ticketId && t.userId === data.user.userId);
+                if (ticket) Object.assign(ticket, fields);
+                else { ticket = { ticketId: uid(), userId: data.user.userId, createdAt: new Date().toISOString(), ...fields }; all.push(ticket); }
+                local.set(STORE.tickets, all);
+                return ticket;
+            }
+            return rpc('film_save_ticket', { p_token: sessionToken(), p_ticket: fields, p_ticket_id: ticketId || null });
+        },
+
+        async saveTickets(list) {
+            if (!list.length) return [];
+            if (!isCloud) {
+                const created = list.map((fields) => ({ ticketId: uid(), userId: data.user.userId, createdAt: new Date().toISOString(), ...fields }));
+                local.set(STORE.tickets, [...local.get(STORE.tickets, []), ...created]);
+                return created;
+            }
+            return rpc('film_save_tickets', { p_token: sessionToken(), p_tickets: list });
+        },
+
+        async deleteTicket(ticketId) {
+            if (!isCloud) {
+                local.set(STORE.tickets, local.get(STORE.tickets, []).filter((t) => !(t.ticketId === ticketId && t.userId === data.user.userId)));
+                return;
+            }
+            await rpc('film_delete_ticket', { p_token: sessionToken(), p_ticket_id: ticketId });
+        },
+
+        /* 영화 상세의 FILM LOG 관객 리뷰: 공개로 저장된 한줄평 [{ author, oneLineReview, rating, watchedAt, createdAt }] */
+        async publicReviews(movieId) {
+            if (!isCloud) {
+                const users = local.get(STORE.users, []);
+                return local.get(STORE.tickets, [])
+                    .filter((t) => t.movieId === movieId && t.isPublic === true && t.oneLineReview?.trim())
+                    .map((t) => ({ ...t, author: users.find((u) => u.userId === t.userId)?.nickname || '관객' }));
+            }
+            try {
+                return await rpc('film_public_reviews', { p_movie_id: movieId });
+            } catch (error) {
+                console.warn('공개 리뷰를 불러오지 못했습니다.', error);
+                return [];
+            }
+        }
+    };
+
+    /* 클라우드로 바꾼 뒤 처음 로그인했을 때: 이 기기에만 있던 예전 티켓을 계정으로 옮길지 묻는다 */
+    async function offerLocalTicketMigration(user) {
+        if (!isCloud || !user) return;
+        const legacyUser = local.get(STORE.user, null);
+        const legacy = local.get(STORE.tickets, []).filter((t) => legacyUser && t.userId === legacyUser.userId);
+        if (!legacy.length || local.get('ticketbook.migrationDeclined', '') === legacyUser.userId) return;
+        const ok = await confirmDialog(`이 기기에만 저장된 티켓 ${legacy.length}장이 있어요.\n내 계정(클라우드)으로 옮길까요?`, '옮기기');
+        if (!ok) { local.set('ticketbook.migrationDeclined', legacyUser.userId); return; }
+        await backend.saveTickets(legacy.map(({ ticketId, userId, createdAt, ...fields }) => fields));
+        local.set(STORE.tickets, local.get(STORE.tickets, []).filter((t) => t.userId !== legacyUser.userId));
+        local.del(STORE.user);
+    }
+
+    /* 영화관 순위 실시간 갱신
+       CGV·롯데시네마·메가박스 사이트는 브라우저에서 직접 부를 수 없어(CORS) js/server.py 가 대신 받아 온다.
+       - http://127.0.0.1:8000 으로 열면 같은 서버의 /api/*-chart 를 부른다.
+       - index.html 을 파일로 바로 열어도 server.py 가 켜져 있으면 http://127.0.0.1:8000 에서 받아 온다.
+       - 서버가 꺼져 있으면 앱에 들어 있는 대체 순위를 보여 준다.
+       화면에 들어올 때마다(뒤로 가기로 돌아오거나 탭을 다시 볼 때 포함) 새로 요청하고, 홈에서는 1분마다 다시 확인한다. */
+    const CGV_CHART_REFRESH_MS = 60 * 1000;
+    const CHART_API_BASE = location.protocol === 'file:' ? 'http://127.0.0.1:8000/' : ROOT;
+    const CHART_FETCH_TIMEOUT_MS = 8000;
+    async function fetchChart(name, forceRefresh = false) {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), CHART_FETCH_TIMEOUT_MS);
+        try {
+            const refreshParam = forceRefresh ? '&refresh=1' : '';
+            const response = await fetch(`${CHART_API_BASE}api/${name}-chart?t=${Date.now()}${refreshParam}`, { cache: 'no-store', signal: controller.signal });
+            if (!response.ok) throw new Error(`${name} chart request failed (${response.status})`);
+            const chart = await response.json();
+            data.chartCheckedAt = new Date();
+            return chart;
+        } finally {
+            clearTimeout(timer);
+        }
+    }
     function mergeCgvChart(chart) {
         if (!Array.isArray(chart.movies)) throw new Error('CGV 무비차트 데이터 형식이 올바르지 않습니다');
 
@@ -407,6 +650,10 @@
         });
     }
 
+    /* 롯데시네마 포스터는 파일 이름의 크기 코드만 바꾸면 큰 이미지를 받을 수 있다
+       (_503_ 200×288 → _101_ 357×510). 화면에 크게 보이는 포스터가 흐려지지 않게 큰 이미지를 쓴다. */
+    const sharpLottePoster = (src) => String(src || '').replace(/(lottecinema\.co\.kr\/Media\/MovieFile\/MovieImg\/\d+\/\d+)_\d{3}_(\d+)\.(jpe?g|png)$/i, '$1_101_$2.$3');
+
     function mergeLotteChart(chart) {
         if (!Array.isArray(chart.movies)) throw new Error('롯데시네마 무비차트 데이터 형식이 올바르지 않습니다');
         data.lotteChartAsOf = chart.asOf || data.lotteChartAsOf;
@@ -425,7 +672,7 @@
                 (Number(b.reservationRate) || 0) - (Number(a.reservationRate) || 0) ||
                 (Number(a.rank) || Infinity) - (Number(b.rank) || Infinity)
             )
-            .map((movie, index) => ({ ...movie, rank: index + 1, source: 'lotte' }));
+            .map((movie, index) => ({ ...movie, posterPath: sharpLottePoster(movie.posterPath), rank: index + 1, source: 'lotte' }));
         linkChartMoviesToDetail(data.lotteMovies, 'lotte');
     }
 
@@ -474,6 +721,7 @@
         const selectedCard = cgvCarousel.querySelector('.cgv-chart-card.is-active');
         const selectedIndex = reset ? 0 : Number(selectedCard?.dataset.chartIndex) || 0;
         const providerKey = data.activeChartProvider;
+        renderChartStatus();
         const isCgv = providerKey === 'cgv';
         const provider = CHART_PROVIDERS[providerKey].name;
         const movies = chartMovies(providerKey);
@@ -512,6 +760,28 @@
         updateCgvArrows(cgvCarousel);
     }
 
+    /* 무비차트 제목 옆: 실시간으로 받아 온 순위인지, 앱에 들어 있는 대체 순위인지 표시 */
+    function renderChartStatus() {
+        const el = $('#chartStatus');
+        if (!el) return;
+        const key = data.activeChartProvider;
+        const isLive = data[`${key}ChartIsLive`] === true;
+        const updatedAt = data[`${key}ChartUpdatedAt`] ? new Date(data[`${key}ChartUpdatedAt`]) : null;
+        el.classList.toggle('is-live', isLive);
+        // 실시간으로 받아 온 순위일 때만 표시 (대체 순위일 때는 아무것도 표시하지 않음)
+        el.textContent = isLive && updatedAt && !Number.isNaN(updatedAt.getTime())
+            ? `실시간 · ${pad(updatedAt.getHours())}:${pad(updatedAt.getMinutes())}`
+            : '';
+        el.hidden = !el.textContent;
+        const link = $('#chartSiteLink');
+        if (link) {
+            link.href = CHART_PROVIDERS[key].site;
+            link.innerHTML = `${CHART_PROVIDERS[key].name}에서 지금 순위 보기 <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>`;
+            link.setAttribute('aria-label', `${CHART_PROVIDERS[key].name} 공식 사이트에서 지금 순위 보기 (새 창)`);
+        }
+        if (!isLive) console.info('영화관 실시간 순위를 받지 못해 앱에 들어 있는 대체 순위를 표시합니다. js/server.py 를 실행하면 실시간 순위로 바뀝니다.');
+    }
+
     /* 포스터 하단 페이지 표시 점 — 현재 영화는 길쭉한 보라색 막대로 표시 */
     function renderChartDots(count, activeIndex) {
         const dots = $('#cinemaChartDots');
@@ -547,12 +817,9 @@
         });
     }
 
-    async function refreshLiveCgvChart() {
+    async function refreshLiveCgvChart(forceRefresh = false) {
         try {
-            const response = await fetch(`${ROOT}api/cgv-chart`, { cache: 'no-store' });
-            if (!response.ok) throw new Error(`CGV chart request failed (${response.status})`);
-            const chart = await response.json();
-            mergeCgvChart(chart);
+            mergeCgvChart(await fetchChart('cgv', forceRefresh));
             if (data.activeChartProvider === 'cgv') {
                 renderCinemaChart();
             }
@@ -562,11 +829,9 @@
         }
     }
 
-    async function refreshLiveMegaboxChart() {
+    async function refreshLiveMegaboxChart(forceRefresh = false) {
         try {
-            const response = await fetch(`${ROOT}api/megabox-chart`, { cache: 'no-store' });
-            if (!response.ok) throw new Error(`Megabox chart request failed (${response.status})`);
-            mergeMegaboxChart(await response.json());
+            mergeMegaboxChart(await fetchChart('megabox', forceRefresh));
             if (data.activeChartProvider === 'megabox') {
                 renderCinemaChart();
             }
@@ -575,11 +840,9 @@
         }
     }
 
-    async function refreshLiveLotteChart() {
+    async function refreshLiveLotteChart(forceRefresh = false) {
         try {
-            const response = await fetch(`${ROOT}api/lotte-chart`, { cache: 'no-store' });
-            if (!response.ok) throw new Error(`Lotte Cinema chart request failed (${response.status})`);
-            mergeLotteChart(await response.json());
+            mergeLotteChart(await fetchChart('lotte', forceRefresh));
             if (data.activeChartProvider === 'lotte') {
                 renderCinemaChart();
             }
@@ -622,7 +885,7 @@
             });
             menu.querySelector('button').addEventListener('click', async () => {
                 if (!(await confirmDialog('로그아웃할까요?', '로그아웃'))) return;
-                local.del(STORE.user);
+                await backend.signOut();
                 location.href = url('home');
             });
             document.addEventListener('click', (event) => {
@@ -1034,6 +1297,7 @@
             genreToggle.innerHTML = `${genreExpanded ? '접기' : '더보기'} <i class="fa-solid ${genreExpanded ? 'fa-chevron-up' : 'fa-chevron-down'}" aria-hidden="true"></i>`;
         }
 
+        data.onChartsUpdated = () => renderResults();
         function renderResults() {
             const list = filtered();
             const empty = list.length === 0;
@@ -1233,26 +1497,26 @@
             // 로그인 전이면 입력 중인 내용을 보관하고 로그인 화면으로 이동 (로그인 후 이 화면으로 복귀)
             if (!data.user) { session.set(SESSION.draft, draft); needLogin('save'); return; }
             const btn = $('#saveBtn');
+            const label = btn.textContent;
             btn.disabled = true;
             btn.textContent = '저장 중…';
-            setTimeout(() => {
+            (async () => {
                 const fields = {
                     movieId: draft.movieId, movieTitle: draft.movieTitle, posterUrl: draft.posterUrl, watchedAt: draft.watchedAt,
                     viewType: draft.viewType, place: draft.place.trim(), oneLineReview: draft.oneLineReview.trim(),
                     diary: draft.diary.trim(), tags: draft.tags, isPublic: draft.isPublic, rating: draft.rating, ticketImageUrl: ''
                 };
-                let ticket;
-                if (draft.ticketId) {
-                    ticket = data.tickets.find((t) => t.ticketId === draft.ticketId);
-                    Object.assign(ticket, fields);
-                } else {
-                    ticket = { ticketId: uid(), userId: data.user.userId, createdAt: new Date().toISOString(), ...fields };
-                    data.tickets.push(ticket);
+                try {
+                    const ticket = await backend.saveTicket(fields, draft.ticketId);
+                    session.del(SESSION.draft);
+                    location.replace(`${url('write')}?saved=${encodeURIComponent(ticket.ticketId)}`);
+                } catch (error) {
+                    err.textContent = error instanceof AuthError ? `저장하지 못했어요. ${error.message}` : '저장하지 못했어요. 잠시 후 다시 시도해 주세요.';
+                    err.hidden = false;
+                    btn.disabled = false;
+                    btn.textContent = label;
                 }
-                saveTickets();
-                session.del(SESSION.draft);
-                location.replace(`${url('write')}?saved=${ticket.ticketId}`);
-            }, 350);
+            })();
         });
     }
 
@@ -1274,15 +1538,14 @@
        9 로그인 / 회원가입 (조건부 화면)
        ===================================================== */
     function initLogin() {
-        let mode = 'login';
-        const reason = LOGIN_REASON[params.get('reason')] ? params.get('reason') : 'save';
+        // 이 기기에서 처음 시작하면 회원가입부터
+        let mode = backend.hasAccountOnDevice() ? 'login' : 'signup';
         const authError = (msg) => { const el = $('#authError'); el.textContent = msg; el.hidden = false; };
 
         function render() {
             const signup = mode === 'signup';
-            $('#loginReason').textContent = LOGIN_REASON[reason];
             $('#loginSubmit').textContent = signup ? '회원가입' : '로그인';
-            $('#modeToggle').textContent = signup ? '로그인으로 돌아가기' : '회원가입';
+            $('#modeToggle').textContent = signup ? '이미 계정이 있어요 · 로그인' : '처음이에요 · 회원가입';
             $('#password').autocomplete = signup ? 'new-password' : 'current-password';
             $('#authError').hidden = true;
         }
@@ -1293,33 +1556,43 @@
             if (history.length > 1) { e.preventDefault(); history.back(); }
         });
 
-        function finish(user) {
+        async function finish(user) {
             data.user = user;
-            local.set(STORE.user, user);
+            await offerLocalTicketMigration(user);
             const next = session.get(SESSION.next, null);
             session.del(SESSION.next);
             location.replace(next || url('home'));
         }
-        const publicUser = ({ userId, nickname }) => ({ userId, nickname });
 
-        $('#loginForm').addEventListener('submit', (e) => {
+        $('#loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const nickname = $('#nickname').value.trim();
             const pw = $('#password').value;
+            const signup = mode === 'signup';
             if (!nickname) return authError('닉네임을 입력해 주세요.');
+            if (nickname.length > 20) return authError('닉네임은 20자 이하로 입력해 주세요.');
             if (!isValidPassword(pw)) return authError('비밀번호는 영문자와 숫자를 조합해 8자 이상 입력해 주세요.');
-            // 실습용 목업 인증: 실제 서비스에서는 서버/인증 서비스가 처리해야 한다.
-            const users = local.get(STORE.users, []);
-            const found = users.find((u) => u.nickname.toLocaleLowerCase() === nickname.toLocaleLowerCase());
-            if (mode === 'signup') {
-                if (found) return authError('이미 사용 중인 닉네임이에요.');
-                const user = { userId: uid(), nickname, password: pw };
-                users.push(user);
-                local.set(STORE.users, users);
-                return finish(publicUser(user));
+            const submit = $('#loginSubmit');
+            submit.disabled = true;
+            submit.textContent = signup ? '가입 중…' : '로그인 중…';
+            try {
+                const result = signup
+                    ? await backend.signUp({ nickname, password: pw })
+                    : await backend.signIn({ nickname, password: pw });
+                $('#password').value = '';
+                await finish(result.user);
+            } catch (error) {
+                submit.disabled = false;
+                render();
+                if (error instanceof NotRegisteredError) {
+                    // 가입하지 않은 닉네임: 회원가입 먼저 하도록 알림 (입력한 닉네임·비밀번호는 그대로 둔다)
+                    const goSignup = await confirmDialog('가입하지 않은 닉네임이에요.\n회원가입을 먼저 해 주세요.', '회원가입하기');
+                    if (goSignup) { mode = 'signup'; render(); $('#loginSubmit').focus(); }
+                    return;
+                }
+                authError(error instanceof AuthError ? error.message : '로그인 처리 중 문제가 생겼어요. 잠시 후 다시 시도해 주세요.');
+                console.warn(error);
             }
-            if (!found || found.password !== pw) return authError('닉네임 또는 비밀번호를 확인해 주세요.');
-            finish(publicUser(found));
         });
 
         $('#modeToggle').addEventListener('click', () => { mode = mode === 'login' ? 'signup' : 'login'; render(); });
@@ -1356,19 +1629,24 @@
         };
     }
 
-    function loadSamples() {
-        data.samples.forEach((s) => {
+    async function loadSamples() {
+        const list = data.samples.map((s) => {
             const movie = movieById(s.movieId);
-            if (!movie) return;
-            data.tickets.push({
-                ticketId: uid(), userId: data.user.userId, movieId: movie.movieId, movieTitle: movie.title, posterUrl: movie.posterPath,
+            if (!movie) return null;
+            return {
+                movieId: movie.movieId, movieTitle: movie.title, posterUrl: movie.posterPath,
                 watchedAt: `${ym(today)}-${pad(s.dayOfMonth)}`, viewType: s.viewType, place: s.place, oneLineReview: s.oneLineReview,
-                diary: s.diary, tags: s.tags, ticketImageUrl: '', createdAt: new Date(Date.now() - (30 - s.dayOfMonth) * 1000).toISOString()
-            });
-        });
-        saveTickets();
-        toast('샘플 티켓 4장을 불러왔어요');
-        initTicketbook();
+                diary: s.diary, tags: s.tags, isPublic: false, rating: 0, ticketImageUrl: ''
+            };
+        }).filter(Boolean);
+        try {
+            const created = await backend.saveTickets(list);
+            data.tickets.push(...created);
+            toast(`샘플 티켓 ${created.length}장을 불러왔어요`);
+            initTicketbook();
+        } catch (error) {
+            toast(error instanceof AuthError ? error.message : '샘플 티켓을 저장하지 못했어요');
+        }
     }
 
     function initTicketbook() {
@@ -1494,9 +1772,12 @@
             if (b.dataset.action === 'share') shareTicket(t);
             if (b.dataset.action === 'delete') {
                 if (!(await confirmDialog('이 티켓을 삭제할까요?\n삭제하면 되돌릴 수 없어요.', '삭제'))) return;
-                data.tickets = data.tickets.filter((x) => x.ticketId !== t.ticketId);
-                saveTickets();
-                location.replace(url('ticketbook'));
+                try {
+                    await backend.deleteTicket(t.ticketId);
+                    location.replace(url('ticketbook'));
+                } catch (error) {
+                    toast(error instanceof AuthError ? error.message : '삭제하지 못했어요. 잠시 후 다시 시도해 주세요.');
+                }
             }
         });
     }
@@ -1516,21 +1797,17 @@
         }
 
         const genres = (movie.genreIds || []).map((id) => genreName(id)).filter(Boolean);
-        const chartAsOf = chartKey === 'lotte' ? data.lotteChartAsOf : chartKey === 'megabox' ? data.megaboxChartAsOf : data.cgvChartAsOf;
         const movieMeta = [
             movie.releaseDate ? movie.releaseDate.slice(0, 4) : '',
             genres.join(' · '),
             movie.runtime ? `${movie.runtime}분` : ''
         ].filter(Boolean).join(' · ');
-        const sourceName = chartEntry ? CHART_PROVIDERS[chartKey].chartName : movie.source === 'cgv' ? 'CGV 무비차트' : movie.source === 'json' ? 'J · JSON 파일' : 'A · TMDb API';
         const reviewData = ['cgv', 'lotte', 'megabox'].includes(movie.source) ? { reviews: [] } : await loadJson(`api/movie/${movieId}/reviews`, { reviews: [] });
-        const audienceReviews = data.tickets
-            .filter((ticket) => ticket.movieId === movieId && ticket.isPublic === true && ticket.oneLineReview?.trim())
-            .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+        const audienceReviews = (await backend.publicReviews(movieId))
+            .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)))
             .map((ticket) => {
-                const author = local.get(STORE.users, []).find((user) => user.userId === ticket.userId)?.nickname || '관객';
                 return {
-                    author,
+                    author: ticket.author || '관객',
                     content: ticket.oneLineReview,
                     createdAt: ticket.watchedAt,
                     rating: Number(ticket.rating) || null,
@@ -1579,7 +1856,6 @@
                     </div>
                 </div>
                 ${movie.ottProvider && !chartEntry ? `<p class="movie-detail__source">${esc(movie.ottProvider)}에서만 볼 수 있는 OTT 영화 · ${dotDate(movie.releaseDate)} 공개</p>` : ''}
-                ${chartEntry ? `<p class="movie-detail__source">${sourceName} · ${dotDate(chartAsOf)} 기준 · 개봉 ${dotDate(chartEntry.releaseDate)}</p>` : movie.source !== 'json' ? `<p class="movie-detail__source">${sourceName}${movie.source === 'cgv' ? ` · ${dotDate(data.cgvChartAsOf)} 기준 · 누적 관객 ${esc(movie.cgvAdmissions || '정보 없음')}` : '에서 불러온 개봉 영화 정보'}</p>` : ''}
                 <section class="movie-detail__section">
                     <h3>줄거리</h3>
                     <p>${esc(movie.overview || '등록된 줄거리가 없습니다.')}</p>
@@ -1630,24 +1906,55 @@
         data.apiHasMore = apiData.hasMore;
         initTopButton();
 
+        // 로그인 상태와 내 티켓 불러오기 (클라우드 모드는 Supabase 세션, 기기 저장 모드는 localStorage)
+        if (!isCloud) await migrateLocalPasswords();
+        try {
+            data.user = await backend.currentUser();
+            data.tickets = await backend.loadMyTickets(data.user);
+        } catch (error) {
+            console.warn('로그인 정보 또는 티켓을 불러오지 못했습니다.', error);
+            if (data.user && ['ticketbook', 'calendar', 'detail', 'write'].includes(page)) {
+                toast(error instanceof AuthError ? error.message : '티켓을 불러오지 못했어요');
+            }
+        }
+
         // 로그인이 필요한 화면 (홈 · 검색 · 로그인 · 작성은 비로그인 허용)
         if (['ticketbook', 'calendar', 'detail'].includes(page) && needLogin('myTickets', { replace: true })) return;
 
         initAvatar();
         const routes = { home: initHome, search: initSearch, movie: initMovieDetail, write: initWrite, login: initLogin, ticketbook: initTicketbook, calendar: initCalendar, detail: initDetail };
-        if (location.protocol !== 'file:' && ['search', 'movie', 'write'].includes(page)) {
-            const chartRefreshes = [refreshLiveCgvChart()];
-            if (page === 'search') chartRefreshes.push(refreshLiveLotteChart(), refreshLiveMegaboxChart());
-            if (page === 'movie' && params.get('chart') === 'lotte') chartRefreshes.push(refreshLiveLotteChart());
-            if (page === 'movie' && params.get('chart') === 'megabox') chartRefreshes.push(refreshLiveMegaboxChart());
-            await Promise.all(chartRefreshes);
-        }
+        const chartRefreshesFor = (forceRefresh = false) => {
+            if (page === 'home' || page === 'search') return [
+                refreshLiveCgvChart(forceRefresh),
+                refreshLiveLotteChart(forceRefresh),
+                refreshLiveMegaboxChart(forceRefresh)
+            ];
+            if (page === 'movie' || page === 'write') {
+                const list = [refreshLiveCgvChart(forceRefresh)];
+                if (params.get('chart') === 'lotte') list.push(refreshLiveLotteChart(forceRefresh));
+                if (params.get('chart') === 'megabox') list.push(refreshLiveMegaboxChart(forceRefresh));
+                return list;
+            }
+            return [];
+        };
+        // 검색·영화 상세는 최신 순위를 받은 뒤 화면을 그린다 (서버가 없으면 바로 대체 순위로)
+        if (['search', 'movie', 'write'].includes(page)) await Promise.all(chartRefreshesFor(true));
         (routes[page] || (() => {}))();
-        if (page === 'home' && location.protocol !== 'file:') {
-            const refreshLiveCharts = () => Promise.all([refreshLiveCgvChart(), refreshLiveLotteChart(), refreshLiveMegaboxChart()]);
-            void refreshLiveCharts();
-            setInterval(refreshLiveCharts, CGV_CHART_REFRESH_MS);
+        if (page === 'home') {
+            // 홈은 대체 순위로 먼저 그리고, 실시간 순위가 오면 바로 바꾼다
+            void Promise.all(chartRefreshesFor(true));
+            setInterval(() => { if (!document.hidden) void Promise.all(chartRefreshesFor()); }, CGV_CHART_REFRESH_MS);
         }
+        // 화면에 다시 들어올 때(뒤로 가기·탭 전환)마다 순위를 새로 받아 온다
+        const refreshOnReturn = async () => {
+            if (!['home', 'search', 'movie'].includes(page)) return;
+            const before = JSON.stringify([data.cgvChartUpdatedAt, data.lotteChartUpdatedAt, data.megaboxChartUpdatedAt]);
+            await Promise.all(chartRefreshesFor(true));
+            const after = JSON.stringify([data.cgvChartUpdatedAt, data.lotteChartUpdatedAt, data.megaboxChartUpdatedAt]);
+            if (before !== after && typeof data.onChartsUpdated === 'function') data.onChartsUpdated();
+        };
+        window.addEventListener('pageshow', (event) => { if (event.persisted) void refreshOnReturn(); });
+        document.addEventListener('visibilitychange', () => { if (!document.hidden) void refreshOnReturn(); });
     }
 
     init();
